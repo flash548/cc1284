@@ -657,6 +657,7 @@ void Interpreter::gosub_statement()
 	int tempPos = pos;
 	eat(ID);
 	bool foundLabel = false;
+	pos = 0;  // rewind to beginning of program
 	while (!foundLabel) {
 		current_token = get_next_token();
 		if (current_token.type == LABEL && strcmp(subname, current_token.value.ToString()) == 0) {
