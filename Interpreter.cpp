@@ -163,6 +163,8 @@ Token Interpreter::parse_string()
 	{
 		if (current_char == '"' && peek() != '"') break;  // end of string
 		else if (current_char == '"' && peek() == '"') advance();  // deal with double-quote literals
+		else if (current_char == '\\' && peek() == 'n') { advance(); current_char = '\n'; } // deal with newline char
+		else if (current_char == '\\' && peek() == 't') { advance(); current_char = '\t'; } // deal with tab char
 		result[i++] = current_char;
 		advance();
 	}
