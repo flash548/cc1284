@@ -26,7 +26,7 @@
 #define LCD_SUPPORT
 
 // enable UART at 115.2kbaud
-#define UART_SUPPORT
+#define UART_SUPPORT 
 
 // send error messages to LCD 
 #define DEBUG_ON_LCD

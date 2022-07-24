@@ -8,11 +8,13 @@
 
 #include "Value.h"
 #include <stdlib.h>
-#include <avr/io.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+
+#ifdef TARGET_MICRO
 #include "Serial.h"
+#endif
 
 Value::Value() {}
 // constructor for a INT VARIABLE

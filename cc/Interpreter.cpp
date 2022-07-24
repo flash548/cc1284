@@ -11,14 +11,22 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#ifdef TARGET_MICRO
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/eeprom.h>
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
+#else
+#include <unistd.h>
+#endif 
+
+
 #ifdef LCD_SUPPORT
 #include "LCD.h"
 #endif
+
 #include "Serial.h"
 
 // default constructor
@@ -36,23 +44,29 @@ Interpreter::Interpreter(char* txt)
 	current_char = get_next_pgm_byte(pos);
 	current_token = get_next_token();
 	var_ptr = 0;
-} //Lexer
+} 
 
 // default destructor
 Interpreter::~Interpreter()
 {
-} //~Lexer
+}
 
 // gets next pgm byte from either EEPROM or RAM
 char Interpreter::get_next_pgm_byte(int idx)
 {
-	if (!repl_mode) return (char)eeprom_read_byte((uint8_t*)&text[idx]);  
+	if (!repl_mode) {
+    #ifdef TARGET_MICRO
+      return (char)eeprom_read_byte((uint8_t*)&text[idx]);  
+    #else
+      return text[idx];
+    #endif
+  }
 	else return text[idx];
 }
 
 void Interpreter::error(char* err)
 {
-#ifdef DEBUG_ON_LCD
+#if defined DEBUG_ON_LCD && defined TARGET_MICRO
 	SetLCD_XY(0,0);
 	ClearLCD();
 	lcd_printf("ERR: ");
@@ -60,13 +74,17 @@ void Interpreter::error(char* err)
 	if (strlen(err) == 0) lcd_printf(current_token.value.ToString());
 	else lcd_printf(err);
 #endif
-#ifdef DEBUG_ON_SERIAL
+#if defined DEBUG_ON_SERIAL && defined TARGET_MICRO
 	send_string("ERR: ");
 	if (strlen(err) == 0) send_string(current_token.value.ToString());
 	else send_string(err);
 	send_string("\n");
 #endif
+#ifdef TARGET_MICRO
 	if (!repl_mode) { wdt_enable(WDTO_15MS); while(1); }
+#else
+  printf("error: %s\n", current_token.value.ToString());
+#endif
 }
 
 void Interpreter::advance()
@@ -222,8 +240,6 @@ Token Interpreter::_id()
 	else if (nocase_cmp(name, "INT") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_INT); }
 	else if (nocase_cmp(name, "BOOL") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_BOOL); }
 	else if (nocase_cmp(name, "DBL") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_DOUBLE); }
-	else if (nocase_cmp(name, "FREERAM") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_FREERAM); }
-	else if (nocase_cmp(name, "REBOOT") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_REBOOT); }
 	else if (nocase_cmp(name, "DELAY") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_DELAY); }
 	else if (nocase_cmp(name, "DDRA") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_DDRA); }
 	else if (nocase_cmp(name, "PORTA") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_PORTA); }
@@ -564,9 +580,6 @@ Token Interpreter::get_next_token()
 
 void Interpreter::eat(TokenType tokType)
 {
-	//char msg[50];
-	//sprintf(msg, "%s %i %i\r\n", current_token.value.ToString(), current_token.type, tokType);
-	//send_string(msg);
 	if (current_token.type == tokType)
 	{
 		current_token = get_next_token();
@@ -618,7 +631,14 @@ void Interpreter::statement()
 	else if (current_token.type == GOSUB) gosub_statement();
 	else if (current_token.type == INT) {
 		Value r(expr());
-		if (repl_mode) { send_string(r.ToString()); send_string("\r\n"); }
+		if (repl_mode) { 
+      #ifdef TARGET_MICRO
+      send_string(r.ToString()); 
+      send_string("\r\n"); 
+      #else
+      printf("%s\r\n", r.ToString());
+      #endif
+    }
 	}
 }
 
@@ -659,7 +679,14 @@ void Interpreter::assignment_statement()
 				current_char = get_next_pgm_byte(pos);
 				current_token = get_next_token();
 				Value right(expr());
-				if (repl_mode) { send_string(right.ToString()); send_string("\r\n"); }
+				if (repl_mode) { 
+          #ifdef TARGET_MICRO
+          send_string(right.ToString()); 
+          send_string("\r\n");
+          #else
+          printf("%s\r\n", right.ToString());
+          #endif
+        }
 			}
 		}
 	}
@@ -831,14 +858,22 @@ Value Interpreter::function_call()
 	if (funcType == FUNC_CALL_PRINT) {
 		Value right(expr());
 		eat(RPAREN);
-#ifdef LCD_SUPPORT		
+#if defined LCD_SUPPORT && defined TARGET_MICRO
 		lcd_printf(right.ToString());
+#else
+    printf("%s\r\n", right.ToString());
 #endif
-		if (repl_mode) { send_string(right.ToString()); send_string("\r\n"); }
+
+		if (repl_mode) { 
+      #ifdef TARGET_MICRO
+      send_string(right.ToString()); 
+      send_string("\r\n"); 
+      #else
+      printf("%s\r\n", right.ToString());
+      #endif
+    }
 		return right;
 	}
-	else if (funcType == FUNC_CALL_FREERAM) { eat(RPAREN); Value right(freeRAM()); return right; }
-	else if (funcType == FUNC_CALL_REBOOT) { eat(RPAREN);  wdt_enable(WDTO_15MS); while(1); Value right(0); return right; }
 	else if (funcType == FUNC_CALL_UBOUND) { Value right(expr().arraySize-1); eat(RPAREN); return right; }
 	else if (funcType == FUNC_CALL_DELAY) { Value right(expr()); eat(RPAREN); delayMs(right.number);	return right; }
 	else if (funcType == FUNC_CALL_SUBSTR) { 
@@ -853,6 +888,7 @@ Value Interpreter::function_call()
 	else if (funcType == FUNC_CALL_BOOL) { Value right((expr().ToBoolean())); eat(RPAREN); return right; }
 	else if (funcType == FUNC_CALL_DOUBLE) { Value right((expr().ToDouble())); eat(RPAREN); return right; }
 	else if (funcType == FUNC_CALL_LEN) { Value right((int)strlen(expr().ToString())); eat(RPAREN); return right; }
+  #ifdef TARGET_MICRO
 	else if (funcType == FUNC_CALL_DDRA) { Value right(expr()); eat(RPAREN);  DDRA = right.number; return right; }
 	else if (funcType == FUNC_CALL_PORTA) { Value right(expr()); eat(RPAREN); PORTA = right.number; return right; }
 	else if (funcType == FUNC_CALL_PINA) { eat(RPAREN); Value v(PINA); return v; }
@@ -917,13 +953,7 @@ Value Interpreter::function_call()
 		Value res((int)ADCW);  // get result
 		return res;
 	}
-#ifdef LCD_SUPPORT
-	else if (funcType == FUNC_CALL_INITLCD) { Value right(expr()); eat(RPAREN); InitLCD(right.ToBoolean()); }
-	else if (funcType == FUNC_CALL_SETXY) { Value row(expr()); eat(COMMA); Value col(expr()); eat(RPAREN); SetLCD_XY(row.number, col.number); }
-	else if (funcType == FUNC_CALL_CLEARLCD) { eat(RPAREN); ClearLCD(); }
-#endif	
-
-	// UART0 FUNCTIONS=====
+  	// UART0 FUNCTIONS=====
 	
 	// sends a string out the UART0 and appends a \r\n sequence
 	else if (funcType == FUNC_CALL_SENDSERIAL) { Value row(expr()); eat(RPAREN); send_string(row.ToString()); send_string("\r\n"); }		
@@ -1022,6 +1052,14 @@ Value Interpreter::function_call()
 	// enable the UART1 rx buffer on interrupt
 	else if (funcType == FUNC_CALL_INITUART1) { eat(RPAREN); UCSR1B |= (1 << RXCIE1); sei(); }
 		
+#endif
+#if defined LCD_SUPPORT && defined TARGET_MICRO
+	else if (funcType == FUNC_CALL_INITLCD) { Value right(expr()); eat(RPAREN); InitLCD(right.ToBoolean()); }
+	else if (funcType == FUNC_CALL_SETXY) { Value row(expr()); eat(COMMA); Value col(expr()); eat(RPAREN); SetLCD_XY(row.number, col.number); }
+	else if (funcType == FUNC_CALL_CLEARLCD) { eat(RPAREN); ClearLCD(); }
+#endif	
+
+
 	// a default return value if we don't return before this
 	Value v(0);
 	return v;
@@ -1291,13 +1329,18 @@ bool Interpreter::store_var(const char* name, Value v)
 
 void Interpreter::delayMs(int number)
 {
+  #if defined TARGET_MICRO
 	int i = 0;
 	for (i=0;i<number;i++) _delay_ms(1);
+  #else
+  usleep(1000*number);
+  #endif  
 
 }
 
 int Interpreter::strlen_ee(char* str)
 {
+  #ifdef TARGET_MICRO
 	int i = 0;
 	int len = 0;
 	char c = (char)eeprom_read_byte((uint8_t*)&str[i++]);
@@ -1306,11 +1349,7 @@ int Interpreter::strlen_ee(char* str)
 		c = (char)eeprom_read_byte((uint8_t*)&str[i++]);
 	}
 	return len;
-}
-
-int Interpreter::freeRAM()
-{
-	extern int __heap_start, *__brkval;
-	int v;
-	return (int) &v - (__brkval == 0) ? (int) &__heap_start: (int) __brkval;
+  #else
+  return sizeof(str);
+  #endif
 }

@@ -14,8 +14,6 @@
 #define FUNC_CALL_PRINT 1
 #define FUNC_CALL_LEN 2
 #define FUNC_CALL_UBOUND 3
-#define FUNC_CALL_FREERAM 4
-#define FUNC_CALL_REBOOT 5
 #define FUNC_CALL_DELAY 6
 #define FUNC_CALL_DDRA 7
 #define FUNC_CALL_DDRB 8
@@ -111,7 +109,6 @@ class Interpreter
 	bool store_var(const char* name, Value v);
 	void delayMs(int number);
 	int strlen_ee(char* str);
-	int freeRAM();
 	protected:
 	private:
 
