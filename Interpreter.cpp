@@ -1,10 +1,9 @@
 /*
-* Lexer.cpp
-*
-* Created: 12/14/2018 8:49:13 PM
-* Author: z
-*/
-
+ * Lexer.cpp
+ *
+ * Created: 12/14/2018 8:49:13 PM
+ * Author: z
+ */
 
 #include "Interpreter.h"
 #include <ctype.h>
@@ -24,9 +23,9 @@
 Interpreter::Interpreter()
 {
 	repl_mode = true;
-	var_ptr = 0;	
+	var_ptr = 0;
 }
-Interpreter::Interpreter(char* txt)
+Interpreter::Interpreter(char *txt)
 {
 	repl_mode = false;
 	text = txt;
@@ -35,7 +34,7 @@ Interpreter::Interpreter(char* txt)
 	current_char = get_next_pgm_byte(pos);
 	current_token = get_next_token();
 	var_ptr = 0;
-} //Lexer
+} // Lexer
 
 // default destructor
 Interpreter::~Interpreter()
@@ -45,27 +44,35 @@ Interpreter::~Interpreter()
 // gets next pgm byte from either EEPROM or RAM
 char Interpreter::get_next_pgm_byte(int idx)
 {
-	if (!repl_mode) return (char)eeprom_read_byte((uint8_t*)&text[idx]);  
-	else return text[idx];
+	if (!repl_mode)
+		return (char)eeprom_read_byte((uint8_t *)&text[idx]);
+	else
+		return text[idx];
 }
 
-void Interpreter::error(const char* err)
+void Interpreter::error(const char *err)
 {
 #ifdef DEBUG_ON_LCD
-	SetLCD_XY(0,0);
+	SetLCD_XY(0, 0);
 	ClearLCD();
 	lcd_printf("ERR: ");
 	SetLCD_XY(1, 0);
-	if (strlen(err) == 0) lcd_printf(current_token.value.ToString());
-	else lcd_printf(err);
+	if (strlen(err) == 0)
+		lcd_printf(current_token.value.ToString());
+	else
+		lcd_printf(err);
 #endif
 #ifdef DEBUG_ON_SERIAL
 	send_string("ERR: ");
-	if (strlen(err) == 0) send_string(current_token.value.ToString());
-	else send_string(err);
+	if (strlen(err) == 0)
+		send_string(current_token.value.ToString());
+	else
+		send_string(err);
 	send_string("\n");
 #endif
-	if (!repl_mode) while(1);
+	if (!repl_mode)
+		while (1)
+			;
 }
 
 void Interpreter::advance()
@@ -85,7 +92,7 @@ char Interpreter::peek()
 {
 	if (pos + 1 < pgm_length)
 	{
-		return get_next_pgm_byte(pos+1);
+		return get_next_pgm_byte(pos + 1);
 	}
 	else
 	{
@@ -119,14 +126,14 @@ Token Interpreter::parse_number()
 			result[i++] = current_char;
 			advance();
 		}
-		
+
 		result[i++] = '\0';
 		Token t;
 		t.type = FLOATNUM;
 		t.value = Value(atof(result));
 		return t;
 	}
-	
+
 	result[i++] = '\0';
 	Token t;
 	t.type = INT;
@@ -140,9 +147,9 @@ Token Interpreter::parse_hex()
 	char result[20];
 	int i = 0;
 	while (current_char != '\0' && (isdigit(current_char) ||
-	current_char == 'A' || current_char == 'B' ||
-	current_char == 'C' || current_char == 'D' ||
-	current_char == 'E' || current_char  == 'F'))
+									current_char == 'A' || current_char == 'B' ||
+									current_char == 'C' || current_char == 'D' ||
+									current_char == 'E' || current_char == 'F'))
 	{
 		result[i++] = current_char;
 		advance();
@@ -152,7 +159,6 @@ Token Interpreter::parse_hex()
 	t.type = INT;
 	t.value = Value((int)strtol(result, NULL, 16));
 	return t;
-
 }
 
 Token Interpreter::parse_string()
@@ -161,10 +167,20 @@ Token Interpreter::parse_string()
 	int i = 0;
 	while (current_char != '\0')
 	{
-		if (current_char == '"' && peek() != '"') break;  // end of string
-		else if (current_char == '"' && peek() == '"') advance();  // deal with double-quote literals
-		else if (current_char == '\\' && peek() == 'n') { advance(); current_char = '\n'; } // deal with newline char
-		else if (current_char == '\\' && peek() == 't') { advance(); current_char = '\t'; } // deal with tab char
+		if (current_char == '"' && peek() != '"')
+			break; // end of string
+		else if (current_char == '"' && peek() == '"')
+			advance(); // deal with double-quote literals
+		else if (current_char == '\\' && peek() == 'n')
+		{
+			advance();
+			current_char = '\n';
+		} // deal with newline char
+		else if (current_char == '\\' && peek() == 't')
+		{
+			advance();
+			current_char = '\t';
+		} // deal with tab char
 		result[i++] = current_char;
 		advance();
 	}
@@ -177,14 +193,16 @@ Token Interpreter::parse_string()
 	return t;
 }
 
-int nocase_cmp(char* str, const char* str2)
+int nocase_cmp(char *str, const char *str2)
 {
 	int i = 0;
-	while(str2[i] != '\0') {
-		if (toupper(str[i]) != toupper(str2[i])) return 1;
+	while (str2[i] != '\0')
+	{
+		if (toupper(str[i]) != toupper(str2[i]))
+			return 1;
 		i++;
 	}
-	
+
 	return 0;
 }
 
@@ -195,13 +213,15 @@ Token Interpreter::_id()
 	Token t;
 	while (current_char != '\0' && isalnum(current_char))
 	{
-		if (isalpha(current_char)) current_char = toupper(current_char);
+		if (isalpha(current_char))
+			current_char = toupper(current_char);
 		name[i++] = current_char;
 		advance();
 	}
-	
+
 	// detect labels and return
-	if (current_char == ':') {
+	if (current_char == ':')
+	{
 		advance();
 		name[i++] = '\0';
 		t.type = LABEL;
@@ -211,61 +231,261 @@ Token Interpreter::_id()
 
 	name[i++] = '\0';
 
-	if (nocase_cmp(name, "PRINT") == 0) { t.type = FUNC_CALL; t.value = Value(FUNC_CALL_PRINT); }
-	else if (nocase_cmp(name, "LEN") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_LEN); }
-	else if (nocase_cmp(name, "UBOUND") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_UBOUND); }
-	else if (nocase_cmp(name, "FREERAM") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_FREERAM); }
-	else if (nocase_cmp(name, "REBOOT") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_REBOOT); }
-	else if (nocase_cmp(name, "DELAY") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_DELAY); }
+	if (nocase_cmp(name, "PRINT") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_PRINT);
+	}
+	else if (nocase_cmp(name, "LEN") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_LEN);
+	}
+	else if (nocase_cmp(name, "UBOUND") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_UBOUND);
+	}
+	else if (nocase_cmp(name, "FREERAM") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_FREERAM);
+	}
+	else if (nocase_cmp(name, "REBOOT") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_REBOOT);
+	}
+	else if (nocase_cmp(name, "DELAY") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_DELAY);
+	}
 #if defined ATMEGA32 || defined ATMEGA1284
-	else if (nocase_cmp(name, "DDRA") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_DDRA); }
-	else if (nocase_cmp(name, "PORTA") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_PORTA); }
-	else if (nocase_cmp(name, "PINA") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_PINA); }
+	else if (nocase_cmp(name, "DDRA") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_DDRA);
+	}
+	else if (nocase_cmp(name, "PORTA") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_PORTA);
+	}
+	else if (nocase_cmp(name, "PINA") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_PINA);
+	}
 #endif
-	else if (nocase_cmp(name, "DDRB") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_DDRB); }
-	else if (nocase_cmp(name, "DDRC") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_DDRC); }
-	else if (nocase_cmp(name, "DDRD") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_DDRD); }
-	else if (nocase_cmp(name, "PORTB") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_PORTB); }
-	else if (nocase_cmp(name, "PORTC") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_PORTC); }
-	else if (nocase_cmp(name, "PORTD") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_PORTD); }
-	else if (nocase_cmp(name, "PINB") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_PINB); }
-	else if (nocase_cmp(name, "PINC") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_PINC); }
-	else if (nocase_cmp(name, "PIND") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_PIND); }
-	else if (nocase_cmp(name, "ADCSETUP") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_ADCSETUP); }
-	else if (nocase_cmp(name, "AREAD") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_AREAD); }
-	else if (nocase_cmp(name, "SETPWM0") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_SETPWM0); }
-	else if (nocase_cmp(name, "SETPWM1") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_SETPWM1); }
+	else if (nocase_cmp(name, "DDRB") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_DDRB);
+	}
+	else if (nocase_cmp(name, "DDRC") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_DDRC);
+	}
+	else if (nocase_cmp(name, "DDRD") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_DDRD);
+	}
+	else if (nocase_cmp(name, "PORTB") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_PORTB);
+	}
+	else if (nocase_cmp(name, "PORTC") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_PORTC);
+	}
+	else if (nocase_cmp(name, "PORTD") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_PORTD);
+	}
+	else if (nocase_cmp(name, "PINB") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_PINB);
+	}
+	else if (nocase_cmp(name, "PINC") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_PINC);
+	}
+	else if (nocase_cmp(name, "PIND") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_PIND);
+	}
+	else if (nocase_cmp(name, "ADCSETUP") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_ADCSETUP);
+	}
+	else if (nocase_cmp(name, "AREAD") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_AREAD);
+	}
+	else if (nocase_cmp(name, "SETPWM0") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_SETPWM0);
+	}
+	else if (nocase_cmp(name, "SETPWM1") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_SETPWM1);
+	}
 #ifdef LCD_SUPPORT
-	else if (nocase_cmp(name, "INITLCD") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_INITLCD); }
-	else if (nocase_cmp(name, "SETXY") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_SETXY); }
-	else if (nocase_cmp(name, "CLEARLCD") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_CLEARLCD); }
+	else if (nocase_cmp(name, "INITLCD") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_INITLCD);
+	}
+	else if (nocase_cmp(name, "SETXY") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_SETXY);
+	}
+	else if (nocase_cmp(name, "CLEARLCD") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_CLEARLCD);
+	}
 #endif
-	else if (nocase_cmp(name, "SENDSERIAL") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_SENDSERIAL); }
-	else if (nocase_cmp(name, "RXSERIAL") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_RXSERIAL); }
-	else if (nocase_cmp(name, "RXBYTE") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_RXBYTE); }
-	else if (nocase_cmp(name, "TXBYTE") == 0) { t.type = FUNC_CALL;	t.value = Value(FUNC_CALL_TXBYTE); }
+	else if (nocase_cmp(name, "SENDSERIAL") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_SENDSERIAL);
+	}
+	else if (nocase_cmp(name, "RXSERIAL") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_RXSERIAL);
+	}
+	else if (nocase_cmp(name, "RXBYTE") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_RXBYTE);
+	}
+	else if (nocase_cmp(name, "TXBYTE") == 0)
+	{
+		t.type = FUNC_CALL;
+		t.value = Value(FUNC_CALL_TXBYTE);
+	}
 	// end builtin-funcs...
-	else if (nocase_cmp(name, "TRUE") == 0) { t.type = BOOL; t.value = Value(true); }
-	else if (nocase_cmp(name, "FALSE") == 0) { t.type = BOOL; t.value = Value(false); }
-	else if (nocase_cmp(name, "DIM") == 0) { t.type = DIM; t.value = Value("DIM"); }
-	else if (nocase_cmp(name, "LET") == 0) { t.type = LET; t.value = Value("LET"); }
-	else if (nocase_cmp(name, "NOT") == 0) { t.type = NOT; t.value = Value("NOT"); }
-	else if (nocase_cmp(name, "AND") == 0) { t.type = AND; t.value = Value("AND"); }
-	else if (nocase_cmp(name, "OR") == 0) { t.type = OR; t.value = Value("OR"); }
-	else if (nocase_cmp(name, "XOR") == 0) { t.type = NOT; t.value = Value("XOR"); }
-	else if (nocase_cmp(name, "IF") == 0) { t.type = IF; t.value = Value("IF"); }
-	else if (nocase_cmp(name, "THEN") == 0) { t.type = THEN; t.value = Value("THEN"); }
-	else if (nocase_cmp(name, "WHILE") == 0) { t.type = WHILE; t.value = Value("WHILE"); }
-	else if (nocase_cmp(name, "WEND") == 0) { t.type = WEND; t.value = Value("WEND"); }
-	else if (nocase_cmp(name, "RETURN") == 0) { t.type = RETURN; t.value = Value("RETURN"); }
-	else if (nocase_cmp(name, "GOSUB") == 0) { t.type = GOSUB; t.value = Value("GOSUB"); }
-	else if (nocase_cmp(name, "ELSE") == 0) { t.type = ELSE; t.value = Value("ELSE"); }
-	else if (nocase_cmp(name, "FOR") == 0) { t.type = FOR; t.value = Value("FOR"); }
-	else if (nocase_cmp(name, "TO") == 0) { t.type = TO; t.value = Value("TO"); }
-	else if (nocase_cmp(name, "AS") == 0) { t.type = AS; t.value = Value("AS"); }
-	else if (nocase_cmp(name, "STEP") == 0) { t.type = STEP; t.value = Value("STEP"); }
-	else if (nocase_cmp(name, "NEXT") == 0) { t.type = NEXT; t.value = Value("NEXT"); }
-	else if (nocase_cmp(name, "END") == 0) {t.type = END; t.value = Value("END"); }
+	else if (nocase_cmp(name, "TRUE") == 0)
+	{
+		t.type = BOOL;
+		t.value = Value(true);
+	}
+	else if (nocase_cmp(name, "FALSE") == 0)
+	{
+		t.type = BOOL;
+		t.value = Value(false);
+	}
+	else if (nocase_cmp(name, "DIM") == 0)
+	{
+		t.type = DIM;
+		t.value = Value("DIM");
+	}
+	else if (nocase_cmp(name, "LET") == 0)
+	{
+		t.type = LET;
+		t.value = Value("LET");
+	}
+	else if (nocase_cmp(name, "NOT") == 0)
+	{
+		t.type = NOT;
+		t.value = Value("NOT");
+	}
+	else if (nocase_cmp(name, "AND") == 0)
+	{
+		t.type = AND;
+		t.value = Value("AND");
+	}
+	else if (nocase_cmp(name, "OR") == 0)
+	{
+		t.type = OR;
+		t.value = Value("OR");
+	}
+	else if (nocase_cmp(name, "XOR") == 0)
+	{
+		t.type = NOT;
+		t.value = Value("XOR");
+	}
+	else if (nocase_cmp(name, "IF") == 0)
+	{
+		t.type = IF;
+		t.value = Value("IF");
+	}
+	else if (nocase_cmp(name, "THEN") == 0)
+	{
+		t.type = THEN;
+		t.value = Value("THEN");
+	}
+	else if (nocase_cmp(name, "WHILE") == 0)
+	{
+		t.type = WHILE;
+		t.value = Value("WHILE");
+	}
+	else if (nocase_cmp(name, "WEND") == 0)
+	{
+		t.type = WEND;
+		t.value = Value("WEND");
+	}
+	else if (nocase_cmp(name, "RETURN") == 0)
+	{
+		t.type = RETURN;
+		t.value = Value("RETURN");
+	}
+	else if (nocase_cmp(name, "GOSUB") == 0)
+	{
+		t.type = GOSUB;
+		t.value = Value("GOSUB");
+	}
+	else if (nocase_cmp(name, "ELSE") == 0)
+	{
+		t.type = ELSE;
+		t.value = Value("ELSE");
+	}
+	else if (nocase_cmp(name, "FOR") == 0)
+	{
+		t.type = FOR;
+		t.value = Value("FOR");
+	}
+	else if (nocase_cmp(name, "TO") == 0)
+	{
+		t.type = TO;
+		t.value = Value("TO");
+	}
+	else if (nocase_cmp(name, "AS") == 0)
+	{
+		t.type = AS;
+		t.value = Value("AS");
+	}
+	else if (nocase_cmp(name, "STEP") == 0)
+	{
+		t.type = STEP;
+		t.value = Value("STEP");
+	}
+	else if (nocase_cmp(name, "NEXT") == 0)
+	{
+		t.type = NEXT;
+		t.value = Value("NEXT");
+	}
+	else if (nocase_cmp(name, "END") == 0)
+	{
+		t.type = END;
+		t.value = Value("END");
+	}
 	else
 	{
 		// return as a variable name token (value is the name of the var)
@@ -274,7 +494,6 @@ Token Interpreter::_id()
 	}
 
 	return t;
-
 }
 
 Token Interpreter::get_next_token()
@@ -496,7 +715,6 @@ Token Interpreter::get_next_token()
 			t.type = DIV;
 			t.value = Value('/');
 			return t;
-			
 		}
 
 		if (current_char == '\\')
@@ -532,7 +750,6 @@ Token Interpreter::get_next_token()
 	t.type = END;
 	t.value = Value('\0');
 	return t;
-
 }
 
 void Interpreter::eat(TokenType tokType)
@@ -541,11 +758,14 @@ void Interpreter::eat(TokenType tokType)
 	{
 		current_token = get_next_token();
 	}
-	else { error("Token Mismatch"); }
+	else
+	{
+		error("Token Mismatch");
+	}
 }
 
 // just runs a single statement from REPL mode
-void Interpreter::execute_statement(char* line)
+void Interpreter::execute_statement(char *line)
 {
 	// set everything up here just if we were running a whole program..
 	//  source will obviously be from RAM - not EEPROM
@@ -554,7 +774,7 @@ void Interpreter::execute_statement(char* line)
 	pgm_length = strlen(text);
 	current_char = get_next_pgm_byte(pos);
 	current_token = get_next_token();
-	statement();  // execute the statement
+	statement(); // execute the statement
 }
 
 // program: statement_list
@@ -580,15 +800,26 @@ void Interpreter::statement_list()
 // statement: function_call | assignment_statement | empty
 void Interpreter::statement()
 {
-	if (current_token.type == ID || current_token.type == DIM) assignment_statement();
-	else if (current_token.type == FUNC_CALL) function_call();
-	else if (current_token.type == WHILE) while_statement();
-	else if (current_token.type == FOR) for_statement();
-	else if (current_token.type == IF) if_statement();
-	else if (current_token.type == GOSUB) gosub_statement();
-	else if (current_token.type == INT) {
+	if (current_token.type == ID || current_token.type == DIM)
+		assignment_statement();
+	else if (current_token.type == FUNC_CALL)
+		function_call();
+	else if (current_token.type == WHILE)
+		while_statement();
+	else if (current_token.type == FOR)
+		for_statement();
+	else if (current_token.type == IF)
+		if_statement();
+	else if (current_token.type == GOSUB)
+		gosub_statement();
+	else if (current_token.type == INT)
+	{
 		Value r(expr());
-		if (repl_mode) { send_string(r.ToString()); send_string("\r\n"); }
+		if (repl_mode)
+		{
+			send_string(r.ToString());
+			send_string("\r\n");
+		}
 	}
 }
 
@@ -597,14 +828,17 @@ void Interpreter::assignment_statement()
 {
 	char varname[20];
 	bool newArrayOp = false;
-	if (current_token.type == DIM) {
+	if (current_token.type == DIM)
+	{
 		newArrayOp = true;
 		eat(DIM);
 	}
 	strcpy(varname, current_token.value.ToString());
 	eat(ID);
-	if (!newArrayOp) {
-		if (current_token.type == LPAREN) {
+	if (!newArrayOp)
+	{
+		if (current_token.type == LPAREN)
+		{
 			// we're assigning to an array element here..
 			eat(LPAREN);
 			int index = expr().number;
@@ -612,28 +846,38 @@ void Interpreter::assignment_statement()
 			eat(EQ);
 			Value parentValue = lookup_var(varname);
 			Value result = expr();
-			if (result.type == INTEGER) parentValue.update_array(index, result.number);
-			else if (result.type == FLOAT) parentValue.update_array(index, result.floatNumber);
+			if (result.type == INTEGER)
+				parentValue.update_array(index, result.number);
+			else if (result.type == FLOAT)
+				parentValue.update_array(index, result.floatNumber);
 		}
-		else {
+		else
+		{
 			// regular old variable assignment...maybe. (might be a REPL statement)
-			if (current_token.type == EQ) {
+			if (current_token.type == EQ)
+			{
 				eat(EQ);
 				Value right(expr());
 				store_var(varname, right);
 			}
-			else {
+			else
+			{
 				// must just be a REPL statement or just some useless line, just eval the ID
 				//  so rewind the program pointer to beginning of line and run expr() on it...
 				pos = 0;
 				current_char = get_next_pgm_byte(pos);
 				current_token = get_next_token();
 				Value right(expr());
-				if (repl_mode) { send_string(right.ToString()); send_string("\r\n"); }
+				if (repl_mode)
+				{
+					send_string(right.ToString());
+					send_string("\r\n");
+				}
 			}
 		}
 	}
-	else {
+	else
+	{
 		// DIM a new array of given size
 		eat(LPAREN);
 		int size = expr().number;
@@ -641,8 +885,13 @@ void Interpreter::assignment_statement()
 		eat(AS);
 		char type[10];
 		strcpy(type, current_token.value.ToString());
-		if (nocase_cmp(type, "INTEGER") == 0) { Value right(INTEGER, size); store_var(varname, right); }
-		else {
+		if (nocase_cmp(type, "INTEGER") == 0)
+		{
+			Value right(INTEGER, size);
+			store_var(varname, right);
+		}
+		else
+		{
 			Value right(FLOAT, size);
 			store_var(varname, right);
 		}
@@ -659,55 +908,66 @@ void Interpreter::gosub_statement()
 	int tempPos = pos;
 	eat(ID);
 	bool foundLabel = false;
-	pos = 0;  // rewind to beginning of program
-	while (!foundLabel) {
+	pos = 0; // rewind to beginning of program
+	while (!foundLabel)
+	{
 		current_token = get_next_token();
-		if (current_token.type == LABEL && strcmp(subname, current_token.value.ToString()) == 0) {
+		if (current_token.type == LABEL && strcmp(subname, current_token.value.ToString()) == 0)
+		{
 			// found the sub
 			eat(LABEL);
 			foundLabel = true;
-			while (current_token.type != RETURN) {
+			while (current_token.type != RETURN)
+			{
 				statement();
 				eat(NEWLINE);
 			}
 			eat(RETURN);
-			
+
 			// return to the caller..
 			pos = tempPos;
 			current_char = get_next_pgm_byte(pos);
 			current_token = get_next_token();
 		}
 	}
-	//eat(NEWLINE);
+	// eat(NEWLINE);
 }
 
 // if_statement: IF expr THEN statement
 void Interpreter::if_statement()
 {
 	eat(IF);
-	if (expr().ToBoolean()) {
+	if (expr().ToBoolean())
+	{
 		eat(THEN);
 		statement();
 		eat(NEWLINE);
-		if (current_token.type == ELSE) {
+		if (current_token.type == ELSE)
+		{
 			// if there was an else clause, eat it up...
 			eat(ELSE);
-			while (current_token.type != NEWLINE) current_token = get_next_token();
+			while (current_token.type != NEWLINE)
+				current_token = get_next_token();
 			eat(NEWLINE);
 		}
 	}
-	else {
+	else
+	{
 		eat(THEN);
-		while (current_token.type != NEWLINE) current_token = get_next_token();
+		while (current_token.type != NEWLINE)
+			current_token = get_next_token();
 		eat(NEWLINE);
-		if (current_token.type == ELSE) {
+		if (current_token.type == ELSE)
+		{
 			eat(ELSE);
 			statement();
 			eat(NEWLINE);
 		}
-		else {
+		else
+		{
 			// no else was given...
-			while (current_token.type != NEWLINE) current_token = get_next_token();
+			while (current_token.type != NEWLINE)
+				current_token = get_next_token();
 			eat(NEWLINE);
 		}
 	}
@@ -717,11 +977,14 @@ void Interpreter::if_statement()
 void Interpreter::while_statement()
 {
 	eat(WHILE);
-	int tempPos = pos-1;
+	int tempPos = pos - 1;
 	eat(LPAREN);
-	while (expr().ToBoolean()) {
-		eat(RPAREN); eat(NEWLINE);
-		while (current_token.type != WEND) {
+	while (expr().ToBoolean())
+	{
+		eat(RPAREN);
+		eat(NEWLINE);
+		while (current_token.type != WEND)
+		{
 			statement();
 			eat(NEWLINE);
 		}
@@ -731,7 +994,8 @@ void Interpreter::while_statement()
 		current_token = get_next_token();
 		eat(LPAREN);
 	}
-	if (current_token.type == RPAREN) {
+	if (current_token.type == RPAREN)
+	{
 		eat(RPAREN);
 		int while_count = 1;
 		while (while_count > 0)
@@ -739,43 +1003,47 @@ void Interpreter::while_statement()
 			// go thru block until we hit our WEND..
 			//  skip other WHILE constructs if needed
 			current_token = get_next_token();
-			if (current_token.type == WHILE) while_count++;
-			if (current_token.type == WEND) while_count--;
+			if (current_token.type == WHILE)
+				while_count++;
+			if (current_token.type == WEND)
+				while_count--;
 		}
 		eat(WEND);
 	}
-
 }
 
 // statement: for_statement assignment_statement TO expr STEP expr NEWLINE statement_list() NEWLINE NEXT ID
 void Interpreter::for_statement()
 {
-	int tempPos = pos+3;
+	int tempPos = pos + 3;
 	eat(FOR);
 	char varname[20];
 	strcpy(varname, current_token.value.ToString());
 	assignment_statement();
 	eat(TO);
-	while (lookup_var(varname).number <= expr().number) {
+	while (lookup_var(varname).number <= expr().number)
+	{
 		int incrVal = 1;
-		if (current_token.type == STEP) {
+		if (current_token.type == STEP)
+		{
 			eat(STEP);
 			Value v(expr());
 			incrVal = v.number;
 		}
-		while (current_token.type != NEXT) {
+		while (current_token.type != NEXT)
+		{
 			statement();
 			eat(NEWLINE);
 		}
-		
+
 		store_var(varname, lookup_var(varname).number + incrVal);
 		// return back to the expression
 		pos = tempPos;
 		current_char = get_next_pgm_byte(pos);
-		do {
+		do
+		{
 			current_token = get_next_token();
-		}
-		while (current_token.type != TO);
+		} while (current_token.type != TO);
 		eat(TO);
 	}
 	int for_count = 1;
@@ -784,11 +1052,14 @@ void Interpreter::for_statement()
 		// go thru block until we hit our NEXT..
 		//  skip other FOR constructs if needed
 		current_token = get_next_token();
-		if (current_token.type == FOR) for_count++;
-		if (current_token.type == NEXT) for_count--;
+		if (current_token.type == FOR)
+			for_count++;
+		if (current_token.type == NEXT)
+			for_count--;
 	}
 	eat(NEXT);
-	if (current_token.type == ID) eat(ID);
+	if (current_token.type == ID)
+		eat(ID);
 }
 
 // statement: function_call | assignment_statement | empty
@@ -798,114 +1069,273 @@ Value Interpreter::function_call()
 	eat(FUNC_CALL);
 	eat(LPAREN);
 
-	if (funcType == FUNC_CALL_PRINT) {
+	if (funcType == FUNC_CALL_PRINT)
+	{
 		Value right(expr());
 		eat(RPAREN);
-#ifdef LCD_SUPPORT		
+#ifdef LCD_SUPPORT
 		lcd_printf(right.ToString());
 #endif
-		if (repl_mode) { send_string(right.ToString()); send_string("\r\n"); }
+		if (repl_mode)
+		{
+			send_string(right.ToString());
+			send_string("\r\n");
+		}
 		return right;
 	}
-	else if (funcType == FUNC_CALL_FREERAM) { eat(RPAREN); Value right(freeRAM()); return right; }
-	else if (funcType == FUNC_CALL_REBOOT) { eat(RPAREN);  wdt_enable(WDTO_120MS); while(1); Value right(0); return right; }
-	else if (funcType == FUNC_CALL_UBOUND) { Value right(expr().arraySize-1); eat(RPAREN); return right; }
-	else if (funcType == FUNC_CALL_DELAY) { Value right(expr()); eat(RPAREN); delayMs(right.number);	return right; }
-	else if (funcType == FUNC_CALL_SUBSTR) { 
-		Value refVar(expr()); eat(COMMA); Value start(expr()); eat(COMMA); Value len(expr()); eat(RPAREN);
-		char newStr[len.number+1];
+	else if (funcType == FUNC_CALL_FREERAM)
+	{
+		eat(RPAREN);
+		Value right(freeRAM());
+		return right;
+	}
+	else if (funcType == FUNC_CALL_REBOOT)
+	{
+		eat(RPAREN);
+		wdt_enable(WDTO_120MS);
+		while (1)
+			;
+		Value right(0);
+		return right;
+	}
+	else if (funcType == FUNC_CALL_UBOUND)
+	{
+		Value right(expr().arraySize - 1);
+		eat(RPAREN);
+		return right;
+	}
+	else if (funcType == FUNC_CALL_DELAY)
+	{
+		Value right(expr());
+		eat(RPAREN);
+		delayMs(right.number);
+		return right;
+	}
+	else if (funcType == FUNC_CALL_SUBSTR)
+	{
+		Value refVar(expr());
+		eat(COMMA);
+		Value start(expr());
+		eat(COMMA);
+		Value len(expr());
+		eat(RPAREN);
+		char newStr[len.number + 1];
 		memcpy(newStr, refVar.ToString(), len.number);
 		newStr[len.number] = '\0';
 		return Value(newStr);
 	}
-	else if (funcType == FUNC_CALL_LEN) { Value right((int)strlen(lookup_var(current_token.value.ToString()).ToString())); eat(RPAREN); return right; }
+	else if (funcType == FUNC_CALL_LEN)
+	{
+		Value right((int)strlen(lookup_var(current_token.value.ToString()).ToString()));
+		eat(RPAREN);
+		return right;
+	}
 #if defined ATMEGA32 || defined ATMEGA1284
-	else if (funcType == FUNC_CALL_DDRA) { Value right(expr()); eat(RPAREN);  DDRA = right.number; return right; }
-	else if (funcType == FUNC_CALL_PORTA) { Value right(expr()); eat(RPAREN); PORTA = right.number; return right; }
-	else if (funcType == FUNC_CALL_PINA) { eat(RPAREN); Value v(PINA); return v; }
+	else if (funcType == FUNC_CALL_DDRA)
+	{
+		Value right(expr());
+		eat(RPAREN);
+		DDRA = right.number;
+		return right;
+	}
+	else if (funcType == FUNC_CALL_PORTA)
+	{
+		Value right(expr());
+		eat(RPAREN);
+		PORTA = right.number;
+		return right;
+	}
+	else if (funcType == FUNC_CALL_PINA)
+	{
+		eat(RPAREN);
+		Value v(PINA);
+		return v;
+	}
 #endif
-	else if (funcType == FUNC_CALL_DDRB) { Value right(expr()); eat(RPAREN);  DDRB = right.number; return right; }
-	else if (funcType == FUNC_CALL_DDRC) { Value right(expr()); eat(RPAREN);  DDRC = right.number; return right; }
-	else if (funcType == FUNC_CALL_DDRD) { Value right(expr()); eat(RPAREN);  DDRD = right.number; return right; }
-	else if (funcType == FUNC_CALL_PORTB) { Value right(expr()); eat(RPAREN); PORTB = right.number; return right; }
-	else if (funcType == FUNC_CALL_PORTC) { Value right(expr()); eat(RPAREN); PORTC = right.number; return right; }
-	else if (funcType == FUNC_CALL_PORTD) { Value right(expr()); eat(RPAREN); PORTD = right.number; return right; }
-	else if (funcType == FUNC_CALL_PINB) { eat(RPAREN); Value v(PINB); return v; }
-	else if (funcType == FUNC_CALL_PINC) { eat(RPAREN); Value v(PINC); return v; }
-	else if (funcType == FUNC_CALL_PIND) { eat(RPAREN); Value v(PIND); return v; }
-	else if (funcType == FUNC_CALL_ADCSETUP) { 
-		eat(RPAREN); 
-		ADMUX = 0x40; // use AREF PIN
+	else if (funcType == FUNC_CALL_DDRB)
+	{
+		Value right(expr());
+		eat(RPAREN);
+		DDRB = right.number;
+		return right;
+	}
+	else if (funcType == FUNC_CALL_DDRC)
+	{
+		Value right(expr());
+		eat(RPAREN);
+		DDRC = right.number;
+		return right;
+	}
+	else if (funcType == FUNC_CALL_DDRD)
+	{
+		Value right(expr());
+		eat(RPAREN);
+		DDRD = right.number;
+		return right;
+	}
+	else if (funcType == FUNC_CALL_PORTB)
+	{
+		Value right(expr());
+		eat(RPAREN);
+		PORTB = right.number;
+		return right;
+	}
+	else if (funcType == FUNC_CALL_PORTC)
+	{
+		Value right(expr());
+		eat(RPAREN);
+		PORTC = right.number;
+		return right;
+	}
+	else if (funcType == FUNC_CALL_PORTD)
+	{
+		Value right(expr());
+		eat(RPAREN);
+		PORTD = right.number;
+		return right;
+	}
+	else if (funcType == FUNC_CALL_PINB)
+	{
+		eat(RPAREN);
+		Value v(PINB);
+		return v;
+	}
+	else if (funcType == FUNC_CALL_PINC)
+	{
+		eat(RPAREN);
+		Value v(PINC);
+		return v;
+	}
+	else if (funcType == FUNC_CALL_PIND)
+	{
+		eat(RPAREN);
+		Value v(PIND);
+		return v;
+	}
+	else if (funcType == FUNC_CALL_ADCSETUP)
+	{
+		eat(RPAREN);
+		ADMUX = 0x40;  // use AREF PIN
 		ADCSRA = 0x87; // ADC on, and divide by 128 for prescalar
 	}
-	else if (funcType == FUNC_CALL_SETPWM0) {
+	else if (funcType == FUNC_CALL_SETPWM0)
+	{
 		Value right(expr());
-		if (right.number <= 0) { 
+		if (right.number <= 0)
+		{
 #if defined ATMEGA32 || defined ATMEGA1284
-			PORTD &= ~(1 << 5);  
+			PORTD &= ~(1 << 5);
 #else
-			PORTB &= ~(1 << 1);  
+			PORTB &= ~(1 << 1);
 #endif
 		}
-		else if (right.number >=255) {
+		else if (right.number >= 255)
+		{
 #if defined ATMEGA32 || defined ATMEGA1284
 			PORTD |= (1 << 5);
 #else
 			PORTB |= (1 << 1);
-#endif					
+#endif
 		}
-		else {
-			TCCR1A=(1<<COM1A1) | (0<<COM1A0) | (0<<WGM11) | (1<<WGM10);
-			TCCR1B=(0<<ICNC1) | (0<<ICES1) | (0<<WGM13) | (1<<WGM12) | (0<<CS12) | (1<<CS11) | (1<<CS10);
-			OCR1AH=0x00;
-			OCR1AL=right.number;	
+		else
+		{
+			TCCR1A = (1 << COM1A1) | (0 << COM1A0) | (0 << WGM11) | (1 << WGM10);
+			TCCR1B = (0 << ICNC1) | (0 << ICES1) | (0 << WGM13) | (1 << WGM12) | (0 << CS12) | (1 << CS11) | (1 << CS10);
+			OCR1AH = 0x00;
+			OCR1AL = right.number;
 		}
 		eat(RPAREN);
 	}
-	else if (funcType == FUNC_CALL_SETPWM1) { 
+	else if (funcType == FUNC_CALL_SETPWM1)
+	{
 		Value right(expr());
-		if (right.number <= 0) {
+		if (right.number <= 0)
+		{
 #if defined ATMEGA32 || defined ATMEGA1284
 			PORTD &= ~(1 << 4);
 #else
 			PORTB &= ~(1 << 2);
 #endif
 		}
-		else if (right.number >= 255) {
+		else if (right.number >= 255)
+		{
 #if defined ATMEGA32 || defined ATMEGA1284
 			PORTD |= (1 << 4);
 #else
 			PORTB |= (1 << 2);
 #endif
 		}
-		else {
-			TCCR1A=(1<<COM1B1) | (0<<COM1B0) | (0<<WGM11) | (1<<WGM10);
-			TCCR1B=(0<<ICNC1) | (0<<ICES1) | (0<<WGM13) | (1<<WGM12) | (0<<CS12) | (1<<CS11) | (1<<CS10);
-			OCR1BH=0x00;
-			OCR1BL=right.number;
+		else
+		{
+			TCCR1A = (1 << COM1B1) | (0 << COM1B0) | (0 << WGM11) | (1 << WGM10);
+			TCCR1B = (0 << ICNC1) | (0 << ICES1) | (0 << WGM13) | (1 << WGM12) | (0 << CS12) | (1 << CS11) | (1 << CS10);
+			OCR1BH = 0x00;
+			OCR1BL = right.number;
 		}
 		eat(RPAREN);
 	}
-	else if (funcType == FUNC_CALL_AREAD) { 
-		Value pin(expr()); 
-		eat(RPAREN);  
+	else if (funcType == FUNC_CALL_AREAD)
+	{
+		Value pin(expr());
+		eat(RPAREN);
 		ADMUX = 0x40 | pin.number;
 		_delay_ms(1);
-		ADCSRA|=(1<<ADSC); // Start the A/D conversion
-		while ((ADCSRA & (1<<ADSC)));  // wait for completion
+		ADCSRA |= (1 << ADSC); // Start the A/D conversion
+		while ((ADCSRA & (1 << ADSC)))
+			; // wait for completion
 		int ad_data = ADCW;
-		Value res((double)(ad_data/1023.0)*5.0);  // get result
+		Value res((double)(ad_data / 1023.0) * 5.0); // get result
 		return res;
 	}
 #ifdef LCD_SUPPORT
-	else if (funcType == FUNC_CALL_INITLCD) { Value right(expr()); eat(RPAREN); InitLCD(right.ToBoolean()); }
-	else if (funcType == FUNC_CALL_SETXY) { Value row(expr()); eat(COMMA); Value col(expr()); eat(RPAREN); SetLCD_XY(row.number, col.number); }
-	else if (funcType == FUNC_CALL_CLEARLCD) { eat(RPAREN); ClearLCD(); }
-#endif	
-	else if (funcType == FUNC_CALL_SENDSERIAL) { Value row(expr()); eat(RPAREN); send_string(row.ToString()); send_string("\r\n"); }
-	else if (funcType == FUNC_CALL_RXSERIAL) { eat(RPAREN);get_string(serialRxBuf, MAXSTRLENGTH); Value ret(serialRxBuf); return ret; }
-	else if (funcType == FUNC_CALL_TXBYTE) { Value right(expr()); eat(RPAREN); send_byte((char)right.number); Value v(0); return v; }
-	else if (funcType == FUNC_CALL_RXBYTE) { eat(RPAREN); Value rx(get_byte()); return rx; }
+	else if (funcType == FUNC_CALL_INITLCD)
+	{
+		Value right(expr());
+		eat(RPAREN);
+		InitLCD(right.ToBoolean());
+	}
+	else if (funcType == FUNC_CALL_SETXY)
+	{
+		Value row(expr());
+		eat(COMMA);
+		Value col(expr());
+		eat(RPAREN);
+		SetLCD_XY(row.number, col.number);
+	}
+	else if (funcType == FUNC_CALL_CLEARLCD)
+	{
+		eat(RPAREN);
+		ClearLCD();
+	}
+#endif
+	else if (funcType == FUNC_CALL_SENDSERIAL)
+	{
+		Value row(expr());
+		eat(RPAREN);
+		send_string(row.ToString());
+		send_string("\r\n");
+	}
+	else if (funcType == FUNC_CALL_RXSERIAL)
+	{
+		eat(RPAREN);
+		get_string(serialRxBuf, MAXSTRLENGTH);
+		Value ret(serialRxBuf);
+		return ret;
+	}
+	else if (funcType == FUNC_CALL_TXBYTE)
+	{
+		Value right(expr());
+		eat(RPAREN);
+		send_byte((char)right.number);
+		Value v(0);
+		return v;
+	}
+	else if (funcType == FUNC_CALL_RXBYTE)
+	{
+		eat(RPAREN);
+		Value rx(get_byte());
+		return rx;
+	}
 	Value v(0);
 	return v;
 }
@@ -918,10 +1348,10 @@ Value Interpreter::expr()
 	Value result = term();
 
 	while (current_token.type == PLUS ||
-	current_token.type == MINUS ||
-	current_token.type == STR_CONCAT ||
-	current_token.type == LSHIFT ||
-	current_token.type == RSHIFT)
+		   current_token.type == MINUS ||
+		   current_token.type == STR_CONCAT ||
+		   current_token.type == LSHIFT ||
+		   current_token.type == RSHIFT)
 	{
 		Token token = current_token;
 		if (token.type == PLUS)
@@ -963,19 +1393,18 @@ Value Interpreter::term()
 	Value result = factor();
 
 	while (
-	current_token.type == MUL ||
-	current_token.type == DIV ||
-	current_token.type == AND ||
-	current_token.type == OR ||
-	current_token.type == XOR ||
-	current_token.type == GT ||
-	current_token.type == GTE ||
-	current_token.type == LT ||
-	current_token.type == LTE ||
-	current_token.type == MOD ||
-	current_token.type == NEQ ||
-	current_token.type == EQ
-	)
+		current_token.type == MUL ||
+		current_token.type == DIV ||
+		current_token.type == AND ||
+		current_token.type == OR ||
+		current_token.type == XOR ||
+		current_token.type == GT ||
+		current_token.type == GTE ||
+		current_token.type == LT ||
+		current_token.type == LTE ||
+		current_token.type == MOD ||
+		current_token.type == NEQ ||
+		current_token.type == EQ)
 	{
 		Token token = current_token;
 		// if (token.type == POW)
@@ -1072,7 +1501,6 @@ Value Interpreter::factor()
 	{
 		eat(NOT);
 		return !factor();
-
 	}
 	else if (token.type == BOOL)
 	{
@@ -1087,7 +1515,8 @@ Value Interpreter::factor()
 	else if (token.type == ID)
 	{
 		eat(ID);
-		if (current_token.type == LPAREN) {
+		if (current_token.type == LPAREN)
+		{
 			// we have an array element here, look it up
 			eat(LPAREN);
 			int index = factor().number;
@@ -1096,7 +1525,8 @@ Value Interpreter::factor()
 			Value v = parentVal.index_array(index);
 			return v;
 		}
-		else {
+		else
+		{
 			Value v = lookup_var(token.value.ToString());
 			return v;
 		}
@@ -1129,64 +1559,70 @@ Value Interpreter::factor()
 	return v;
 }
 
-Value Interpreter::lookup_var(const char* name)
+Value Interpreter::lookup_var(const char *name)
 {
 	int i = 0;
-	for (i=0;i<NUM_VARS;i++)
+	for (i = 0; i < NUM_VARS; i++)
 	{
-		if (strcmp(vars[i], name) == 0) break;
+		if (strcmp(vars[i], name) == 0)
+			break;
 	}
-	
-	if (i >= NUM_VARS) {
+
+	if (i >= NUM_VARS)
+	{
 		char b[30];
 		sprintf(b, "Var %s not found", name);
 		error(b);
 	}
-	
+
 	return vals[i];
 }
 
-bool Interpreter::store_var(const char* name, Value v)
+bool Interpreter::store_var(const char *name, Value v)
 {
 	int i = 0;
-	for (i=0;i<NUM_VARS;i++)
+	for (i = 0; i < NUM_VARS; i++)
 	{
 		// var name found, update the existing value
-		if (strcmp(vars[i], name)== 0) {
+		if (strcmp(vars[i], name) == 0)
+		{
 			vals[i] = v;
 			return true;
 		}
 	}
-	
+
 	// didn't find var name, so add it to end of array
-	if (i >= NUM_VARS) {
+	if (i >= NUM_VARS)
+	{
 		strcpy(vars[var_ptr], name);
 		vals[var_ptr++] = v;
 		return true;
 	}
-	
-	if (var_ptr >= NUM_VARS) {
+
+	if (var_ptr >= NUM_VARS)
+	{
 		error("Number of vars exceeded");
 	}
-	
+
 	return false;
 }
 
 void Interpreter::delayMs(int number)
 {
 	int i = 0;
-	for (i=0;i<number;i++) _delay_ms(1);
-
+	for (i = 0; i < number; i++)
+		_delay_ms(1);
 }
 
-int Interpreter::strlen_ee(char* str)
+int Interpreter::strlen_ee(char *str)
 {
 	int i = 0;
 	int len = 0;
-	char c = (char)eeprom_read_byte((uint8_t*)&str[i++]);
-	while (c != '\0') {
+	char c = (char)eeprom_read_byte((uint8_t *)&str[i++]);
+	while (c != '\0')
+	{
 		len++;
-		c = (char)eeprom_read_byte((uint8_t*)&str[i++]);
+		c = (char)eeprom_read_byte((uint8_t *)&str[i++]);
 	}
 	return len;
 }
@@ -1195,5 +1631,5 @@ int Interpreter::freeRAM()
 {
 	extern int __heap_start, *__brkval;
 	int v;
-	return (int) &v - (__brkval == 0) ? (int) &__heap_start: (int) __brkval;
+	return (int)&v - (__brkval == 0) ? (int)&__heap_start : (int)__brkval;
 }

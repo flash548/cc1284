@@ -27,11 +27,10 @@ char rxChar = '\0';  // the received char at the UART
 int main(void)
 {	
 	wdt_disable();
-	UCSRB = 0x18;  // enable TX and RX UART chans
-	UBRRL = 0x07;  // baud rate - 115200 (with CPU Freq at 14.7456 MHz)
+	UCSR0B = 0x18;  // enable TX and RX UART chans
+	UBRR0 = 0x07;  // baud rate - 115200 (with CPU Freq at 14.7456 MHz)
 	DDRC = 0xFF;   // set PORTC to be output for debug feedback until we get to the interpreter
 	PORTC= 0x00;
-	
 	while (waitPeriod++ < 20)   // wait time for bootloader until launching interpreter (20 * 100mS) = 2sec
 	{
 		rxChar = get_byte();  // get byte blocks for up to 100mS or until byte rx'd

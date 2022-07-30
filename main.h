@@ -8,7 +8,7 @@
 #define MAIN_H_
 
 // declare type of chip for internal use
-#define ATMEGA32
+#define ATMEGA1284
 
 // define the CPU freq in Hz
 #define F_CPU 14745600UL
