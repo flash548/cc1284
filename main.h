@@ -7,6 +7,11 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
+#define PC_TARGET
+// #define AVR_TARGET
+
+#ifdef AVR_TARGET
+
 // declare type of chip for internal use
 #define ATMEGA1284
 
@@ -33,6 +38,8 @@
 
 // send error messages over UART
 //#define DEBUG_ON_SERIAL
+
+#endif
 
 // MAX length a string variable can be
 #define MAXSTRLENGTH 25 

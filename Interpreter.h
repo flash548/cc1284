@@ -65,8 +65,9 @@ class Interpreter
 	Token parse_string();
 	Token _id();
 	char get_next_pgm_byte(int idx);
-	Token get_next_token();
-	void eat(TokenType tokType);
+  void writeln(Value r);
+  Token get_next_token();
+  void eat(TokenType tokType);
 	void execute_statement(char* line);
 	void run();
 	void statement_list();
@@ -84,8 +85,11 @@ class Interpreter
 	Value lookup_var(const char* name);
 	bool store_var(const char* name, Value v);
 	void delayMs(int number);
+
+#ifdef AVR_TARGET
 	int strlen_ee(char* str);
 	int freeRAM();
+#endif
 	protected:
 	private:
 

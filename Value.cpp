@@ -8,7 +8,11 @@
 
 #include "Value.h"
 #include <stdlib.h>
-#include <avr/io.h>
+
+#ifdef AVR_TARGET
+	#include <avr/io.h>
+#endif
+
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>

@@ -10,15 +10,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <avr/io.h>
-#include <util/delay.h>
-#include <avr/eeprom.h>
-#include <avr/wdt.h>
-#ifdef LCD_SUPPORT
-#include "LCD.h"
+#ifdef PC_TARGET
+	#include <unistd.h>
 #endif
-#include "Serial.h"
-
+#ifdef AVR_TARGET
+	#include <avr/io.h>
+	#include <util/delay.h>
+	#include <avr/eeprom.h>
+	#include <avr/wdt.h>
+	#include "Serial.h"
+#endif
+#ifdef LCD_SUPPORT
+	#include "LCD.h"
+#endif
 // default constructor
 Interpreter::Interpreter()
 {
@@ -30,7 +34,12 @@ Interpreter::Interpreter(char *txt)
 	repl_mode = false;
 	text = txt;
 	pos = 0;
+#ifdef AVR_TARGET
 	pgm_length = strlen_ee(text);
+#endif
+#ifdef PC_TARGET
+	pgm_length = strlen(text);
+#endif
 	current_char = get_next_pgm_byte(pos);
 	current_token = get_next_token();
 	var_ptr = 0;
@@ -44,10 +53,26 @@ Interpreter::~Interpreter()
 // gets next pgm byte from either EEPROM or RAM
 char Interpreter::get_next_pgm_byte(int idx)
 {
+#ifdef AVR_TARGET
 	if (!repl_mode)
 		return (char)eeprom_read_byte((uint8_t *)&text[idx]);
 	else
 		return text[idx];
+#endif
+#ifdef PC_TARGET
+	return text[idx];
+#endif
+}
+
+void Interpreter::writeln(Value r) 
+{
+#ifdef AVR_TARGET
+	send_string(r.ToString());
+	send_string("\r\n");
+#endif
+#ifdef PC_TARGET
+	printf("%s\r\n", r.ToString());
+#endif
 }
 
 void Interpreter::error(const char *err)
@@ -817,8 +842,7 @@ void Interpreter::statement()
 		Value r(expr());
 		if (repl_mode)
 		{
-			send_string(r.ToString());
-			send_string("\r\n");
+			writeln(r.ToString());
 		}
 	}
 }
@@ -870,8 +894,7 @@ void Interpreter::assignment_statement()
 				Value right(expr());
 				if (repl_mode)
 				{
-					send_string(right.ToString());
-					send_string("\r\n");
+					writeln(right.ToString());
 				}
 			}
 		}
@@ -1076,13 +1099,18 @@ Value Interpreter::function_call()
 #ifdef LCD_SUPPORT
 		lcd_printf(right.ToString());
 #endif
+#ifdef AVR_TARGET
 		if (repl_mode)
 		{
-			send_string(right.ToString());
-			send_string("\r\n");
+			writeln(right.ToString());
 		}
+#endif
+#ifdef PC_TARGET
+		writeln(right.ToString());
+#endif
 		return right;
 	}
+#ifdef AVR_TARGET
 	else if (funcType == FUNC_CALL_FREERAM)
 	{
 		eat(RPAREN);
@@ -1098,6 +1126,7 @@ Value Interpreter::function_call()
 		Value right(0);
 		return right;
 	}
+#endif
 	else if (funcType == FUNC_CALL_UBOUND)
 	{
 		Value right(expr().arraySize - 1);
@@ -1130,7 +1159,7 @@ Value Interpreter::function_call()
 		eat(RPAREN);
 		return right;
 	}
-#if defined ATMEGA32 || defined ATMEGA1284
+#ifdef AVR_TARGET
 	else if (funcType == FUNC_CALL_DDRA)
 	{
 		Value right(expr());
@@ -1151,7 +1180,6 @@ Value Interpreter::function_call()
 		Value v(PINA);
 		return v;
 	}
-#endif
 	else if (funcType == FUNC_CALL_DDRB)
 	{
 		Value right(expr());
@@ -1287,6 +1315,7 @@ Value Interpreter::function_call()
 		Value res((double)(ad_data / 1023.0) * 5.0); // get result
 		return res;
 	}
+#endif
 #ifdef LCD_SUPPORT
 	else if (funcType == FUNC_CALL_INITLCD)
 	{
@@ -1308,6 +1337,7 @@ Value Interpreter::function_call()
 		ClearLCD();
 	}
 #endif
+#ifdef AVR_TARGET
 	else if (funcType == FUNC_CALL_SENDSERIAL)
 	{
 		Value row(expr());
@@ -1336,6 +1366,9 @@ Value Interpreter::function_call()
 		Value rx(get_byte());
 		return rx;
 	}
+#endif
+
+	// default return for functions that don't return anything
 	Value v(0);
 	return v;
 }
@@ -1609,11 +1642,17 @@ bool Interpreter::store_var(const char *name, Value v)
 
 void Interpreter::delayMs(int number)
 {
+#ifdef AVR_TARGET
 	int i = 0;
 	for (i = 0; i < number; i++)
 		_delay_ms(1);
+#endif
+#ifdef PC_TARGET
+	usleep(number*1000);
+#endif
 }
 
+#ifdef AVR_TARGET
 int Interpreter::strlen_ee(char *str)
 {
 	int i = 0;
@@ -1633,3 +1672,4 @@ int Interpreter::freeRAM()
 	int v;
 	return (int)&v - (__brkval == 0) ? (int)&__heap_start : (int)__brkval;
 }
+#endif

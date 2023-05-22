@@ -5,18 +5,23 @@
  * Author : z
  */ 
 using namespace std;
+
 #include "Value.h"
 #include "Interpreter.h"
-#include <avr/io.h>
-#include <util/delay.h>
-#include <avr/eeprom.h>
-#include <avr/pgmspace.h>
-#include <avr/wdt.h>
+
+#ifdef AVR_TARGET
+	#include <avr/io.h>
+	#include <util/delay.h>
+	#include <avr/eeprom.h>
+	#include <avr/pgmspace.h>
+	#include <avr/wdt.h>
+	#include "Serial.h"
+#endif
 #ifdef LCD_SUPPORT
 	#include "LCD.h"
 #endif
-#include "Serial.h"
 
+#ifdef AVR_TARGET
 char buffer[EEPROM_PGM_SIZE] EEMEM;  // pointer to the program in EEPROM
 int waitPeriod = 0; // wait period counter for bootloader wait time
 int eePtr = 0;  // pointer to next write location in EEPROM
@@ -71,10 +76,19 @@ int main(void)
 	while (1) { 
 		// if we get here, something bad happened in the interpreter, toggle LEDs for notification
 		_delay_ms(500);
-		PORTC=~0x02;
+		PORTC=~0xAA;
 		_delay_ms(500);
-		PORTC=~0x01;
+		PORTC=~0x55;
 	 }
 	return 0;
 }
+#endif
 
+#ifdef PC_TARGET
+
+int main() {
+	Interpreter interpreter("print(2+2)\ndelay(1000)");
+	interpreter.run();
+}
+
+#endif

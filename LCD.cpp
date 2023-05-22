@@ -5,7 +5,8 @@
  *  Author: z
  */ 
 
-#define F_CPU 14745600UL
+#ifdef LCD_SUPPORT
+
 #include <avr/io.h>
 #include <avr/eeprom.h>
 #include <util/delay.h>
@@ -119,3 +120,5 @@ void SetRS(bool high)
 	if (high) onPortA ? PORTA |= (1 << 0) : PORTB |= (1 << 0);
 	else onPortA ? PORTA &= ~(1 << 0) : PORTB &= ~(1 << 0);
 }
+
+#endif

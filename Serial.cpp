@@ -6,6 +6,8 @@
  */ 
 
 #include "main.h"
+
+#ifdef AVR_TARGET
 #include <avr/io.h>
 #include <util/delay.h>
 
@@ -55,3 +57,5 @@ void send_byte(char c)
 	while ( !( UCSR0A & (1<<UDRE0)) );
 	UDR0 = c;
 }
+
+#endif
