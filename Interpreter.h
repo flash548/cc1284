@@ -56,7 +56,7 @@ class Interpreter
 	int pos;
 	int pgm_length;
 	char current_char;
-	void error(const char* err);
+	void error( char* err);
 	void advance();
 	char peek();
 	void skip_whitespace();

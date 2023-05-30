@@ -75,7 +75,7 @@ void Interpreter::writeln(Value r)
 #endif
 }
 
-void Interpreter::error(const char *err)
+void Interpreter::error(char *err)
 {
 #ifdef DEBUG_ON_LCD
 	SetLCD_XY(0, 0);
@@ -95,9 +95,11 @@ void Interpreter::error(const char *err)
 		send_string(err);
 	send_string("\n");
 #endif
-	if (!repl_mode)
+	if (!repl_mode) {
+		send_string("Entering error loop...\n");
 		while (1)
 			;
+	}
 }
 
 void Interpreter::advance()

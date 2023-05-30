@@ -36,11 +36,17 @@ int main(void)
 	UBRR0 = 0x07;  // baud rate - 115200 (with CPU Freq at 14.7456 MHz)
 	DDRC = 0xFF;   // set PORTC to be output for debug feedback until we get to the interpreter
 	PORTC= 0x00;
+	send_string("1284 BASIC\n");
 	while (waitPeriod++ < 20)   // wait time for bootloader until launching interpreter (20 * 100mS) = 2sec
 	{
+		PORTC = 0x10;
 		rxChar = get_byte();  // get byte blocks for up to 100mS or until byte rx'd
 		if (rxChar != '\0') {   // if received something either go into program load, or branch to REPL
 			charRx = true; 
+			PORTC = 0x20;
+			send_string("received:");
+			send_byte(rxChar);
+			send_byte('\n');
 			if (rxChar == ':') {  // if a ':' was first char, then branch to REPL
 				Interpreter i;
 				#ifdef LCD_SUPPORT
@@ -70,6 +76,8 @@ int main(void)
 		}
 		eeprom_write_byte((uint8_t*)&buffer[eePtr], '\0');  // write the end-of-program (NUL) byte to EEPROM
 	}	
+
+	PORTC=0x00;
 	
 	Interpreter i(buffer);
 	i.run();

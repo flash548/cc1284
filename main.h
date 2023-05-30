@@ -7,8 +7,8 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#define PC_TARGET
-// #define AVR_TARGET
+//#define PC_TARGET
+ #define AVR_TARGET
 
 #ifdef AVR_TARGET
 
@@ -17,6 +17,7 @@
 
 // define the CPU freq in Hz
 #define F_CPU 14745600UL
+// #define F_CPU 16000000UL
 
 // define EEPROM PRGM SIZE
 #if defined ATMEGA32 || defined ATMEGA328
@@ -28,16 +29,16 @@
 #endif
 
 // enable LCD support
-#define LCD_SUPPORT
+//#define LCD_SUPPORT
 
 // enable UART at 115.2kbaud
 #define UART_SUPPORT
 
 // send error messages to LCD 
-#define DEBUG_ON_LCD
+//#define DEBUG_ON_LCD
 
 // send error messages over UART
-//#define DEBUG_ON_SERIAL
+#define DEBUG_ON_SERIAL
 
 #endif
 
