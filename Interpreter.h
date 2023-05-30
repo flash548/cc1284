@@ -1,9 +1,9 @@
 /*
-* Lexer.h
-*
-* Created: 12/14/2018 8:49:13 PM
-* Author: z
-*/
+ * Lexer.h
+ *
+ * Created: 12/14/2018 8:49:13 PM
+ * Author: z
+ */
 
 #include "main.h"
 #include "Value.h"
@@ -45,66 +45,69 @@
 
 class Interpreter
 {
-	//variables
-	public:
-	bool repl_mode;  // are we in REPL mode?  if so, read pgm data from RAM not EEPROM
-	char vars[NUM_VARS][MAX_VARNAME_LEN];  // array to hold variable names
-	Value vals[NUM_VARS]; // array to hold variable values
-	char serialRxBuf[MAXSTRLENGTH];
-	int var_ptr;  // pointer to next available variable location
-	char* text;
-	int pos;
-	int pgm_length;
-	char current_char;
-	void error( char* err);
-	void advance();
-	char peek();
-	void skip_whitespace();
-	Token parse_number();
-	Token parse_hex();
-	Token parse_string();
-	Token _id();
-	char get_next_pgm_byte(int idx);
-  void writeln(Value r);
-  Token get_next_token();
-  void eat(TokenType tokType);
-	void execute_statement(char* line);
-	void run();
-	void statement_list();
-	void statement();
-	void assignment_statement();
-	Value function_call();
-	void for_statement();
-	void while_statement();
-	void if_statement();
-	void gosub_statement();
-	Value expr();
-	Value term();
-	Value factor();
-	Token current_token;
-	Value lookup_var(const char* name);
-	bool store_var(const char* name, Value v);
-	void delayMs(int number);
-
+public:
+    bool repl_mode;  // are we in REPL mode?  if so, read pgm data from RAM not EEPROM
+    char vars[NUM_VARS][MAX_VARNAME_LEN];  // array to hold variable names
+    Value vals[NUM_VARS]; // array to hold variable values
+    char serialRxBuf[MAXSTRLENGTH];
+    int var_ptr;  // pointer to next available variable location
+    char* text;
+    int pos;
+    int pgm_length;
+    char current_char;
+    void error( char* err);
+    void advance();
+    char peek();
+    void skip_whitespace();
+    Token parse_number();
+    Token parse_hex();
+    Token parse_string();
+    Token _id();
+    char get_next_pgm_byte(int idx);
+    void writeln(Value r);
+    Token get_next_token();
+    void eat(TokenType tokType);
+    void execute_statement(char* line);
+    void run();
+    void statement_list();
+    void statement();
+    void assignment_statement();
+    Value function_call();
+    void for_statement();
+    void while_statement();
+    void if_statement();
+    void gosub_statement();
+    Value expr();
+    Value term();
+    Value factor();
+    Token current_token;
+    Value lookup_var(const char* name);
+    bool store_var(const char* name, Value v);
+    void delayMs(int number);
+    
+    void (*errorFunc)(char* errorText);
+    
 #ifdef AVR_TARGET
-	int strlen_ee(char* str);
-	int freeRAM();
+    int strlen_ee(char* str);
+    int freeRAM();
 #endif
-	protected:
-	private:
-
-	//functions
-	public:
-	Interpreter();
-	Interpreter(char* txt);
-	~Interpreter();
-	protected:
-	private:
-	Interpreter( const Interpreter &c );
-	Interpreter& operator=( const Interpreter &c );
-
+protected:
+private:
+    
+    //functions
+public:
+    Interpreter();
+    Interpreter(char* txt);
+    Interpreter(char* txt, void (*errorFunc) (char*));
+    ~Interpreter();
+    int nocase_cmp(char* str, char* str2);
+protected:
+private:
+    Interpreter( const Interpreter &c );
+    Interpreter& operator=( const Interpreter &c );
+    
 }; //Lexer
 
-int nocase_cmp(char* str, const char* str2);
+
 
 #endif //__LEXER_H__

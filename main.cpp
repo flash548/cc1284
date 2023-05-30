@@ -4,8 +4,6 @@
  * Created: 12/14/2018 3:03:59 PM
  * Author : z
  */ 
-using namespace std;
-
 #include "Value.h"
 #include "Interpreter.h"
 
@@ -16,6 +14,10 @@ using namespace std;
 	#include <avr/pgmspace.h>
 	#include <avr/wdt.h>
 	#include "Serial.h"
+#endif
+#ifdef PC_TARGET
+  #include <stdio.h>
+  #include <stdlib.h>
 #endif
 #ifdef LCD_SUPPORT
 	#include "LCD.h"
@@ -94,9 +96,17 @@ int main(void)
 
 #ifdef PC_TARGET
 
-int main() {
-	Interpreter interpreter("print(2+2)\ndelay(1000)");
-	interpreter.run();
+void errorFunc(char* error) {
+    printf("%s\n", error);
+    exit(1);
 }
+
+int main(int argc, const char * argv[]) {
+    
+    Interpreter i("n=&H00\nwhile(true)\nprins(&H00 + n)\nn=n+1\ndelay(100)\nwend", &errorFunc);
+    i.run();
+    return 0;
+}
+
 
 #endif
