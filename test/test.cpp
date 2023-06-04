@@ -24,4 +24,6 @@ void testCmpNoCase() {
   Interpreter i("");
   assertZero(i.nocase_cmp("print", "PRINT"));
   assertNotZero(i.nocase_cmp("prints", "PRINT"));
+  assertNotZero(i.nocase_cmp("PRINT", "✅"));
+  printf("✅\n");
 }

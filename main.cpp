@@ -103,7 +103,7 @@ void errorFunc(char* error) {
 
 int main(int argc, const char * argv[]) {
     
-    Interpreter i("n=&H00\nwhile(true)\nprins(&H00 + n)\nn=n+1\ndelay(100)\nwend", &errorFunc);
+    Interpreter i("n=&H00\nwhile(true)\nprint(&H00 + n)\nn=n+1\ndelay(100)\nwend", &errorFunc);
     i.run();
     return 0;
 }
