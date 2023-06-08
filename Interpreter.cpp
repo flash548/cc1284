@@ -43,7 +43,19 @@ Interpreter::Interpreter(char *txt)
 	current_char = get_next_pgm_byte(pos);
 	current_token = get_next_token();
 	var_ptr = 0;
-} // Lexer
+}
+
+Interpreter::Interpreter(char *txt, bool fromRam)
+{
+	repl_mode = false;
+	from_ram = fromRam;
+	text = txt;
+	pos = 0;
+	pgm_length = strlen(text);
+	current_char = get_next_pgm_byte(pos);
+	current_token = get_next_token();
+	var_ptr = 0;
+}
 
 // default destructor
 Interpreter::~Interpreter()
@@ -54,7 +66,7 @@ Interpreter::~Interpreter()
 char Interpreter::get_next_pgm_byte(int idx)
 {
 #ifdef AVR_TARGET
-	if (!repl_mode)
+	if (!repl_mode && !from_ram)
 		return (char)eeprom_read_byte((uint8_t *)&text[idx]);
 	else
 		return text[idx];
@@ -91,8 +103,11 @@ void Interpreter::error(char *err)
 	send_string("ERR: ");
 	if (strlen(err) == 0)
 		send_string(current_token.value.ToString());
-	else
+	else {
+		send_string(current_token.value.ToString());
+		send_string("\n");
 		send_string(err);
+	}
 	send_string("\n");
 #endif
 	if (!repl_mode) {
@@ -1105,6 +1120,8 @@ Value Interpreter::function_call()
 		if (repl_mode)
 		{
 			writeln(right.ToString());
+		} else {
+			send_string(right.ToString());
 		}
 #endif
 #ifdef PC_TARGET

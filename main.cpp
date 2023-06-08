@@ -11,6 +11,7 @@ using namespace std;
 
 #ifdef AVR_TARGET
 	#include <avr/io.h>
+	#include <stdio.h>
 	#include <util/delay.h>
 	#include <avr/eeprom.h>
 	#include <avr/pgmspace.h>
@@ -37,6 +38,12 @@ int main(void)
 	DDRC = 0xFF;   // set PORTC to be output for debug feedback until we get to the interpreter
 	PORTC= 0x00;
 	send_string("1284 BASIC\n");
+	send_string("MCUSR: ");
+	char mcu_val[4];
+	sprintf(&mcu_val[0], "%02x\n", MCUSR);
+	send_string(mcu_val);
+	MCUSR = 0x00;
+
 	while (waitPeriod++ < 20)   // wait time for bootloader until launching interpreter (20 * 100mS) = 2sec
 	{
 		PORTC = 0x10;
@@ -79,7 +86,7 @@ int main(void)
 
 	PORTC=0x00;
 	
-	Interpreter i(buffer);
+	Interpreter i("while(true)\nPORTC(&H00)\nPORTC(&HFF)\nWEND", true);
 	i.run();
 	while (1) { 
 		// if we get here, something bad happened in the interpreter, toggle LEDs for notification

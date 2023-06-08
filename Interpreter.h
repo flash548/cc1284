@@ -48,6 +48,7 @@ class Interpreter
 	//variables
 	public:
 	bool repl_mode;  // are we in REPL mode?  if so, read pgm data from RAM not EEPROM
+	bool from_ram; // not REPL but we gave interpreter a ram string so do that, not EEPROM contents
 	char vars[NUM_VARS][MAX_VARNAME_LEN];  // array to hold variable names
 	Value vals[NUM_VARS]; // array to hold variable values
 	char serialRxBuf[MAXSTRLENGTH];
@@ -97,6 +98,7 @@ class Interpreter
 	public:
 	Interpreter();
 	Interpreter(char* txt);
+	Interpreter(char* txt, bool fromRam);
 	~Interpreter();
 	protected:
 	private:
