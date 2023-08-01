@@ -3,14 +3,11 @@
  *
  * Created: 12/22/2018 7:46:53 PM
  *  Author: z
- */ 
-
-#ifdef LCD_SUPPORT
+ */
 
 #include <avr/io.h>
 #include <avr/eeprom.h>
 #include <util/delay.h>
-#include "main.h"
 #include "LCD.h"
 
 int RS_pin = 0;
@@ -31,22 +28,24 @@ void InitLCD(bool portA)
 	_delay_ms(100);
 }
 
-void lcd_printf(const char* str)
+void lcd_printf(const char *str)
 {
 	int i = 0;
-	while (str[i] != '\0') {
+	while (str[i] != '\0')
+	{
 		WriteLCD(str[i++], true);
 	}
 }
 
 // prints a string from an address in EEPROM pointed to by *str
-void lcd_printf_ee(const char* str)
+void lcd_printf_ee(const char *str)
 {
 	int i = 0;
-	char c = (char)eeprom_read_byte((uint8_t*)&str[i++]);
-	while (c != '\0') {
+	char c = (char)eeprom_read_byte((uint8_t *)&str[i++]);
+	while (c != '\0')
+	{
 		WriteLCD(c, true);
-		c = (char)eeprom_read_byte((uint8_t*)&str[i++]);
+		c = (char)eeprom_read_byte((uint8_t *)&str[i++]);
 	}
 }
 
@@ -56,16 +55,20 @@ void ClearLCD()
 	WriteLCD(0x1, false);
 }
 
-void SetLCD_XY(int x, int y) 
+void SetLCD_XY(int x, int y)
 {
 	int i = 0;
-	if (x != 0) {
+	if (x != 0)
+	{
 		i = y | 0x40;
 	}
-	else { i = y; }
-	
+	else
+	{
+		i = y;
+	}
+
 	i |= 0x80;
-	WriteLCD(i, false);	
+	WriteLCD(i, false);
 }
 
 void WriteLCD(char c, bool data)
@@ -89,36 +92,42 @@ void WriteLCD(char c, bool data)
 
 void SetNibblePins(char data)
 {
-	if (onPortA) {
+	if (onPortA)
+	{
 		((data & 0xF) & 0x1) ? PORTA |= (1 << 4) : PORTA &= ~(1 << 4);
 		(((data & 0xF) >> 1) & 0x1) ? PORTA |= (1 << 5) : PORTA &= ~(1 << 5);
 		(((data & 0xF) >> 2) & 0x1) ? PORTA |= (1 << 6) : PORTA &= ~(1 << 6);
 		(((data & 0xF) >> 3) & 0x1) ? PORTA |= (1 << 7) : PORTA &= ~(1 << 7);
 	}
-	else {
+	else
+	{
 		((data & 0xF) & 0x1) ? PORTB |= (1 << 4) : PORTB &= ~(1 << 4);
 		(((data & 0xF) >> 1) & 0x1) ? PORTB |= (1 << 5) : PORTB &= ~(1 << 5);
 		(((data & 0xF) >> 2) & 0x1) ? PORTB |= (1 << 6) : PORTB &= ~(1 << 6);
-		(((data & 0xF) >> 3) & 0x1) ? PORTB |= (1 << 7) : PORTB &= ~(1 << 7);		
+		(((data & 0xF) >> 3) & 0x1) ? PORTB |= (1 << 7) : PORTB &= ~(1 << 7);
 	}
 }
 
 void SetE(bool high)
 {
-	if (high) onPortA ? PORTA |= (1 << 2) : PORTB |= (1 << 2);
-	else onPortA ? PORTA &= ~(1 << 2) : PORTB &= ~(1 << 2);
+	if (high)
+		onPortA ? PORTA |= (1 << 2) : PORTB |= (1 << 2);
+	else
+		onPortA ? PORTA &= ~(1 << 2) : PORTB &= ~(1 << 2);
 }
 
 void SetRW(bool high)
 {
-	if (high) onPortA ? PORTA |= (1 << 1) : PORTB |= (1 << 1);
-	else onPortA ? PORTA &= ~(1 << 1) : PORTB &= ~(1 << 1);
+	if (high)
+		onPortA ? PORTA |= (1 << 1) : PORTB |= (1 << 1);
+	else
+		onPortA ? PORTA &= ~(1 << 1) : PORTB &= ~(1 << 1);
 }
 
 void SetRS(bool high)
 {
-	if (high) onPortA ? PORTA |= (1 << 0) : PORTB |= (1 << 0);
-	else onPortA ? PORTA &= ~(1 << 0) : PORTB &= ~(1 << 0);
+	if (high)
+		onPortA ? PORTA |= (1 << 0) : PORTB |= (1 << 0);
+	else
+		onPortA ? PORTA &= ~(1 << 0) : PORTB &= ~(1 << 0);
 }
-
-#endif
