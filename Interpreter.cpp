@@ -29,6 +29,7 @@ Interpreter::Interpreter()
 {
     repl_mode = true;
     var_ptr = 0;
+    line_number = 1;
 }
 Interpreter::Interpreter(char *txt)
 {
@@ -44,6 +45,7 @@ Interpreter::Interpreter(char *txt)
     current_char = get_next_pgm_byte(pos);
     current_token = get_next_token();
     var_ptr = 0;
+    line_number = 1;
 }
 
 Interpreter::Interpreter(char *txt, bool fromRam)
@@ -56,6 +58,7 @@ Interpreter::Interpreter(char *txt, bool fromRam)
     current_char = get_next_pgm_byte(pos);
     current_token = get_next_token();
     var_ptr = 0;
+    line_number = 1;
 }
 
 // default destructor
@@ -114,9 +117,17 @@ void Interpreter::error(char *err)
 #endif
     if (!repl_mode)
     {
+#ifdef AVR_TARGET
         send_string("Entering error loop...\n");
         while (1)
             ;
+#else
+        printf("Error :(... %s\n", err);
+        printf("Current char: %c\n", current_char);
+        printf("Current line: %c\n", line_number);
+        printf("%s\n", current_token.value.ToString());
+        exit(1);
+#endif
     }
 }
 
@@ -280,6 +291,10 @@ Token Interpreter::_id()
     {
         t.type = FUNC_CALL;
         t.value = Value(FUNC_CALL_PRINT);
+    }
+    else if (nocase_cmp(name, "ASSERT") == 0) {
+        t.type = FUNC_CALL;
+        t.value = Value(FUNC_CALL_ASSERT);
     }
     else if (nocase_cmp(name, "LEN") == 0)
     {
@@ -558,6 +573,7 @@ Token Interpreter::get_next_token()
                 }
 
                 advance();
+                line_number++;
                 t.type = NEWLINE;
                 t.value = Value('\n');
                 return t;
@@ -570,6 +586,18 @@ Token Interpreter::get_next_token()
         if (isdigit(current_char))
         {
             return parse_number();
+        }
+
+        // start of comment
+        // just eat the comment here til end of line or end of file
+        if (current_char == '\'') {
+          advance();
+          while (current_char != '\n') {
+            advance();
+          }
+          line_number++;
+          advance();
+          continue;
         }
 
         if (current_char == '"')
@@ -765,7 +793,6 @@ Token Interpreter::get_next_token()
             t.value = Value(')');
             return t;
         }
-
         error("Invalid token detected");
     }
 
@@ -926,6 +953,7 @@ void Interpreter::gosub_statement()
     char subname[20];
     strcpy(subname, current_token.value.ToString());
     int tempPos = pos;
+    int tempLine = line_number;
     eat(ID);
     bool foundLabel = false;
     pos = 0; // rewind to beginning of program
@@ -946,6 +974,7 @@ void Interpreter::gosub_statement()
 
             // return to the caller..
             pos = tempPos;
+            line_number = tempLine;
             current_char = get_next_pgm_byte(pos);
             current_token = get_next_token();
         }
@@ -998,6 +1027,7 @@ void Interpreter::while_statement()
 {
     eat(WHILE);
     int tempPos = pos - 1;
+    int tempLine = line_number;
     eat(LPAREN);
     while (expr().ToBoolean())
     {
@@ -1010,6 +1040,7 @@ void Interpreter::while_statement()
         }
         // return back to the expression
         pos = tempPos;
+        line_number = tempLine;
         current_char = get_next_pgm_byte(pos);
         current_token = get_next_token();
         eat(LPAREN);
@@ -1036,6 +1067,7 @@ void Interpreter::while_statement()
 void Interpreter::for_statement()
 {
     int tempPos = pos + 3;
+    int tempLine = line_number;
     eat(FOR);
     char varname[20];
     strcpy(varname, current_token.value.ToString());
@@ -1059,6 +1091,7 @@ void Interpreter::for_statement()
         store_var(varname, lookup_var(varname).number + incrVal);
         // return back to the expression
         pos = tempPos;
+        line_number = tempLine;
         current_char = get_next_pgm_byte(pos);
         do
         {
@@ -1128,6 +1161,16 @@ Value Interpreter::function_call()
         return right;
     }
 #endif
+    else if (funcType == FUNC_CALL_ASSERT) {
+#ifdef PC_TARGET
+      Value item(expr());
+      eat(RPAREN);
+      if (!item.ToBoolean()) {
+        printf("Assertion failed at line: %i\n", line_number);
+        exit(1);
+      } 
+#endif
+    }
     else if (funcType == FUNC_CALL_UBOUND)
     {
         Value right(expr().arraySize - 1);

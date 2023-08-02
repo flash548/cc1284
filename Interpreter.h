@@ -41,6 +41,7 @@
 #define FUNC_CALL_SETPWM0 28
 #define FUNC_CALL_SETPWM1 29
 #define FUNC_CALL_SUBSTR 30
+#define FUNC_CALL_ASSERT 31
 
 class Interpreter
 {
@@ -56,6 +57,7 @@ public:
     int pos;
     int pgm_length;
     char current_char;
+    int line_number;
     void error(char *err);
     void advance();
     char peek();

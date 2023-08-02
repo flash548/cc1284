@@ -22,6 +22,7 @@ class Value
 	double* dblArray;
 	int number;
 	double floatNumber;
+  void* item;
 	char str[MAXSTRLENGTH];
 	bool isArray;
 	int arraySize;

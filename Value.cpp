@@ -23,6 +23,7 @@ Value::Value(int i)
 {
 	number = i;
 	sprintf(str, "%i", number);
+  item = (void *) i;
 	type = INTEGER;
 }
 // constructor for a CHAR/INT variable
@@ -55,6 +56,7 @@ Value::Value(TYPE t, int size)
 {
 	type = t;
 	isArray = true;
+  arraySize = size;
 	if (t == INTEGER)
 	{
 		intArray = (int *)malloc(size * sizeof(int));
@@ -807,6 +809,7 @@ char *Value::ToString()
 	}
 	else
 	{
+    printf("%i\n", (int*) item);
 		sprintf(str, "%i", number);
 		return str;
 	}
