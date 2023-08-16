@@ -1,10 +1,14 @@
 /*
-* Value.h
-*
-* Created: 12/14/2018 8:36:21 PM
-* Author: z
-*/
+ * Value.h
+ *
+ * Created: 12/14/2018 8:36:21 PM
+ * Author: z
+ */
 
+#include "Boolean.h"
+#include "Double.h"
+#include "GenericValue.h"
+#include "Integer.h"
 #include "main.h"
 
 #ifndef __VALUE_H__
@@ -14,59 +18,55 @@
 
 enum TYPE { INTEGER, STRING, BOOLEAN, FLOAT };
 
-class Value
-{
+class Value {
 
-	public:
-	int* intArray;
-	double* dblArray;
-	int number;
-	double floatNumber;
-  void* item;
-	char str[MAXSTRLENGTH];
-	bool isArray;
-	int arraySize;
-	TYPE type;
-	bool bval;
-	bool ToBoolean();
-	char* ToString();
-	Value();
-	Value(int i);
-	Value(char i);
-	Value(const char* s);
-	Value(bool b);
-	Value(TYPE t, int size);
-	Value(double i);
-	Value index_array(int index);
-	void update_array(int index, int val);
-	void update_array(int index, double val);
-	friend Value operator+(const Value& v1);
-	friend Value operator-(const Value& v1);
-	friend Value operator+(const Value& v1, const Value &v2);
-	friend Value operator-(const Value& v1, const Value &v2);
-	friend Value operator*(const Value& v1, const Value &v2);
-	friend Value operator/(const Value& v1, const Value &v2);
-	friend Value operator%(const Value& v1, const Value &v2);
-	friend Value operator<<(const Value& v1, const Value &v2);
-	friend Value operator>>(const Value& v1, const Value &v2);
-	friend Value operator&(const Value& v1, const Value &v2);
-	friend Value operator|(const Value& v1, const Value &v2);
-	friend Value operator!(const Value& v1);
-	friend Value operator^(const Value& v1, const Value &v2);
-	friend Value operator==(const Value& v1, const Value &v2);
-	friend Value operator!=(const Value& v1, const Value &v2);
-	friend Value operator>(const Value& v1, const Value &v2);
-	friend Value operator>=(const Value& v1, const Value &v2);
-	friend Value operator<(const Value& v1, const Value &v2);
-	friend Value operator<=(const Value& v1, const Value &v2);
+public:
+  void *item;
+  double floatNumber;
+  GenericValue value;
+  char str[MAXSTRLENGTH];
+  bool isArray;
+  int arraySize;
+  TYPE type;
+  bool bval;
+  bool ToBoolean();
+  int ToInt() const;
+  char *ToString();
+  Value();
+  Value(int i);
+  Value(char i);
+  Value(const char *s);
+  Value(bool b);
+  Value(TYPE t, int size);
+  Value(double i);
+  Value index_array(int index);
+  void update_array(int index, int val);
+  void update_array(int index, double val);
+  friend Value operator+(const Value &v1);
+  friend Value operator-(const Value &v1);
+  friend Value operator+(const Value &v1, const Value &v2);
+  friend Value operator-(const Value &v1, const Value &v2);
+  friend Value operator*(const Value &v1, const Value &v2);
+  friend Value operator/(const Value &v1, const Value &v2);
+  friend Value operator%(const Value &v1, const Value &v2);
+  friend Value operator<<(const Value &v1, const Value &v2);
+  friend Value operator>>(const Value &v1, const Value &v2);
+  friend Value operator&(const Value &v1, const Value &v2);
+  friend Value operator|(const Value &v1, const Value &v2);
+  friend Value operator!(const Value &v1);
+  friend Value operator^(const Value &v1, const Value &v2);
+  friend Value operator==(const Value &v1, const Value &v2);
+  friend Value operator!=(const Value &v1, const Value &v2);
+  friend Value operator>(const Value &v1, const Value &v2);
+  friend Value operator>=(const Value &v1, const Value &v2);
+  friend Value operator<(const Value &v1, const Value &v2);
+  friend Value operator<=(const Value &v1, const Value &v2);
 
-
-}; //Value
+}; // Value
 
 struct Token {
-	TokenType type;
-	Value value;
+  TokenType type;
+  Value value;
 };
-
 
 #endif //__VALUE_H__

@@ -4,8 +4,6 @@
  * Created: 12/14/2018 3:03:59 PM
  * Author : z
  */
-using namespace std;
-
 #include "Interpreter.h"
 #include "Value.h"
 
@@ -131,7 +129,7 @@ int main(int argc, char **argv) {
     Interpreter interpreter(contents);
     interpreter.run();
   } else {
-    Interpreter interpreter("print(2+2)\ndelay(1000)");
+    Interpreter interpreter("print(2+3)\ndelay(1000)");
     interpreter.run();
   }
 }
