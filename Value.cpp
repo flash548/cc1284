@@ -18,12 +18,19 @@
 #include <string.h>
 
 Value::Value() {}
-// Value::Value(const Value &a) { printf("Copy\n"); }
+Value::Value(const Value &a) {
+   
+        value = a.value;
+    type = a.type;
+    isArray = a.isArray;
+    arraySize = a.arraySize;
+}
 // constructor for a INT VARIABLE
 Value::Value(int i) {
   ItemValue item;
   item.number = i;
   value = item;
+    isArray=false;
   type = INTEGER;
 }
 // constructor for a CHAR/INT variable
@@ -31,6 +38,7 @@ Value::Value(char i) {
   ItemValue item;
   item.number = (int)i;
   value = item;
+    isArray=false;
   type = INTEGER;
 }
 // constructor for a STRING variable
@@ -41,6 +49,7 @@ Value::Value(const char *s) {
   strcpy(item.string, s);
   item.string[len] = '\0';
   value = item;
+    isArray=false;
   type = STRING;
 }
 // constructor for a BOOLEAN variable
@@ -48,6 +57,7 @@ Value::Value(bool b) {
   ItemValue item;
   item.bval = b;
   value = item;
+    isArray=false;
   type = BOOLEAN;
 }
 // constructor for a FLOAT variable
@@ -55,12 +65,12 @@ Value::Value(double b) {
   ItemValue item;
   item.floatNumber = b;
   value = item;
+    isArray=false;
   type = FLOAT;
 }
 // constructor for a ARRAY variable of TYPE
 Value::Value(TYPE t, int size) {
   type = t;
-  printf("ALLOC ARAY");
   ItemValue item;
   isArray = true;
   arraySize = size;
@@ -80,15 +90,14 @@ Value::Value(TYPE t, int size) {
 }
 
 Value::~Value() {
-  if (type == STR) {
-    printf("FREEING STRING\n");
+    zombied = true;
+  if (type == STRING && !zombied) {
     free(value.string);
-  } else if (isArray && type == INTEGER) {
-    printf("FREEING ARRAY\n");
+  } else if (isArray && type == INTEGER && !zombied) {
     free(value.intArray);
+
     value.intArray = NULL;
-  } else if (isArray && type == FLOAT) {
-    printf("FREEING DB ARRAY\n");
+  } else if (isArray && type == FLOAT && !zombied) {
     free(value.dblArray);
   }
 }

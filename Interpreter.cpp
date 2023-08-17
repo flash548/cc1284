@@ -920,7 +920,8 @@ void Interpreter::for_statement() {
       eat(NEWLINE);
     }
 
-    store_var(varname, lookup_var(varname).value.number + incrVal);
+    Value v(lookup_var(varname).value.number + 1);
+    store_var(varname, v);
     // return back to the expression
     pos = tempPos;
     line_number = tempLine;
@@ -1354,7 +1355,7 @@ Value Interpreter::lookup_var(const char *name) {
   return vals[i];
 }
 
-bool Interpreter::store_var(const char *name, Value v) {
+bool Interpreter::store_var(const char *name, Value& v) {
   int i = 0;
   for (i = 0; i < NUM_VARS; i++) {
     // var name found, update the existing value
@@ -1367,7 +1368,7 @@ bool Interpreter::store_var(const char *name, Value v) {
   // didn't find var name, so add it to end of array
   if (i >= NUM_VARS) {
     strcpy(vars[var_ptr], name);
-    vals[var_ptr++] = v;
+    vals[var_ptr++] = Value(v);
     return true;
   }
 

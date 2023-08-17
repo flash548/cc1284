@@ -30,6 +30,7 @@ public:
   bool isArray = false;
   int arraySize;
   TYPE type;
+bool zombied = false;
   bool ToBoolean();
   int ToInt() const;
   char *ToString();
@@ -40,7 +41,7 @@ public:
   Value(bool b);
   Value(TYPE t, int size);
   Value(double i);
-  // Value(const Value& v);
+   Value(const Value& v);
   ~Value();
   Value index_array(int index);
   void update_array(int index, int val);

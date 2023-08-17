@@ -5,6 +5,9 @@
  *  Author: z
  */
 
+#ifdef LCD_SUPPORT
+#ifdef AVR_TARGET
+
 #include <avr/io.h>
 #include <avr/eeprom.h>
 #include <util/delay.h>
@@ -131,3 +134,6 @@ void SetRS(bool high)
 	else
 		onPortA ? PORTA &= ~(1 << 0) : PORTB &= ~(1 << 0);
 }
+
+#endif
+#endif

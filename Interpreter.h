@@ -87,7 +87,7 @@ public:
   Value factor();
   Token current_token;
   Value lookup_var(const char *name);
-  bool store_var(const char *name, Value v);
+  bool store_var(const char *name, Value& v);
   void delayMs(int number);
 
 #ifdef AVR_TARGET
