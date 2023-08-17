@@ -28,7 +28,7 @@
 Interpreter::Interpreter() {
   repl_mode = true;
   var_ptr = 0;
-  // // line_number = 1;
+  line_number = 1;
 }
 Interpreter::Interpreter(char *txt) {
   repl_mode = false;
@@ -43,7 +43,7 @@ Interpreter::Interpreter(char *txt) {
   current_char = get_next_pgm_byte(pos);
   current_token = get_next_token();
   var_ptr = 0;
-  // line_number = 1;
+  line_number = 1;
 }
 
 Interpreter::Interpreter(char *txt, bool fromRam) {
@@ -55,7 +55,7 @@ Interpreter::Interpreter(char *txt, bool fromRam) {
   current_char = get_next_pgm_byte(pos);
   current_token = get_next_token();
   var_ptr = 0;
-  // line_number = 1;
+  line_number = 1;
 }
 
 // default destructor
@@ -75,32 +75,45 @@ char Interpreter::get_next_pgm_byte(int idx) {
 }
 
 void Interpreter::writeln(Value r) {
+  char *tempStr = r.ToString();
 #ifdef AVR_TARGET
-  send_string(r.ToString());
+  send_string(tempStr);
   send_string("\r\n");
 #endif
 #ifdef PC_TARGET
-  printf("%s\r\n", r.ToString());
+  printf("%s\r\n", tempStr);
+#endif
+  free(tempStr);
+}
+
+void Interpreter::writeln(const char *r) {
+#ifdef AVR_TARGET
+  send_string(r);
+  send_string("\r\n");
+#endif
+#ifdef PC_TARGET
+  printf("%s\r\n", r);
 #endif
 }
 
 void Interpreter::error(char *err) {
+  char *tempStr = current_token.value.ToString();
 #ifdef DEBUG_ON_LCD
   SetLCD_XY(0, 0);
   ClearLCD();
   lcd_printf("ERR: ");
   SetLCD_XY(1, 0);
   if (strlen(err) == 0)
-    lcd_printf(current_token.value.ToString());
+    lcd_printf(tempStr);
   else
     lcd_printf(err);
 #endif
 #ifdef DEBUG_ON_SERIAL
   send_string("ERR: ");
   if (strlen(err) == 0)
-    send_string(current_token.value.ToString());
+    send_string(tempStr);
   else {
-    send_string(current_token.value.ToString());
+    send_string(tempStr);
     send_string("\n");
     send_string(err);
   }
@@ -109,14 +122,15 @@ void Interpreter::error(char *err) {
   if (!repl_mode) {
 #ifdef AVR_TARGET
     send_string("Entering error loop...\n");
-    while (1)
-      ;
 #else
     printf("Error :(... %s\n", err);
     printf("Current char: %c\n", current_char);
     printf("Current line: %c\n", line_number);
-    printf("%s\n", current_token.value.ToString());
+    printf("Current token val: %s\n", tempStr);
+    free(tempStr);
+#ifdef PC_TARGET
     exit(1);
+#endif
 #endif
   }
 }
@@ -640,6 +654,7 @@ void Interpreter::eat(TokenType tokType) {
   if (current_token.type == tokType) {
     current_token = get_next_token();
   } else {
+    printf("%i, %i\n", current_token.type, tokType);
     error("Token Mismatch");
   }
 }
@@ -688,7 +703,9 @@ void Interpreter::statement() {
   } else if (current_token.type == INT) {
     Value r(expr());
     if (repl_mode) {
-      writeln(r.ToString());
+      char *tempStr = r.ToString();
+      writeln(tempStr);
+      free(tempStr);
     }
   }
 }
@@ -701,21 +718,24 @@ void Interpreter::assignment_statement() {
     newArrayOp = true;
     eat(DIM);
   }
-  strcpy(varname, current_token.value.ToString());
+  if (strlen(current_token.value.value.string) > 20) {
+    error("Variable name length exceeded");
+  }
+  strcpy(varname, current_token.value.value.string);
   eat(ID);
   if (!newArrayOp) {
     if (current_token.type == LPAREN) {
       // we're assigning to an array element here..
       eat(LPAREN);
-      int index = expr().ToInt();
+      int index = expr().value.number;
       eat(RPAREN);
       eat(EQ);
       Value parentValue = lookup_var(varname);
       Value result = expr();
       if (result.type == INTEGER)
-        parentValue.update_array(index, result.ToInt());
+        parentValue.update_array(index, result.value.number);
       else if (result.type == FLOAT)
-        parentValue.update_array(index, result.floatNumber);
+        parentValue.update_array(index, result.value.floatNumber);
     } else {
       // regular old variable assignment...maybe. (might be a REPL statement)
       if (current_token.type == EQ) {
@@ -732,18 +752,20 @@ void Interpreter::assignment_statement() {
         current_token = get_next_token();
         Value right(expr());
         if (repl_mode) {
-          writeln(right.ToString());
+          char *tempStr = right.ToString();
+          writeln(tempStr);
+          free(tempStr);
         }
       }
     }
   } else {
     // DIM a new array of given size
     eat(LPAREN);
-    int size = expr().ToInt();
+    int size = expr().value.number;
     eat(RPAREN);
     eat(AS);
     char type[10];
-    strcpy(type, current_token.value.ToString());
+    strcpy(type, current_token.value.value.string);
     if (nocase_cmp(type, "INTEGER") == 0) {
       Value right(INTEGER, size);
       store_var(varname, right);
@@ -759,7 +781,10 @@ void Interpreter::assignment_statement() {
 void Interpreter::gosub_statement() {
   eat(GOSUB);
   char subname[20];
-  strcpy(subname, current_token.value.ToString());
+  if (strlen(current_token.value.value.string) > 20) {
+    error("GOSUB name too long");
+  }
+  strcpy(subname, current_token.value.value.string);
   int tempPos = pos;
   int tempLine = line_number;
   eat(ID);
@@ -768,7 +793,7 @@ void Interpreter::gosub_statement() {
   while (!foundLabel) {
     current_token = get_next_token();
     if (current_token.type == LABEL &&
-        strcmp(subname, current_token.value.ToString()) == 0) {
+        strcmp(subname, current_token.value.value.string) == 0) {
       // found the sub
       eat(LABEL);
       foundLabel = true;
@@ -780,7 +805,7 @@ void Interpreter::gosub_statement() {
 
       // return to the caller..
       pos = tempPos;
-      // line_number = tempLine;
+      line_number = tempLine;
       current_char = get_next_pgm_byte(pos);
       current_token = get_next_token();
     }
@@ -836,7 +861,7 @@ void Interpreter::while_statement() {
     }
     // return back to the expression
     pos = tempPos;
-    // line_number = tempLine;
+    line_number = tempLine;
     current_char = get_next_pgm_byte(pos);
     current_token = get_next_token();
     eat(LPAREN);
@@ -864,25 +889,28 @@ void Interpreter::for_statement() {
   int tempLine = line_number;
   eat(FOR);
   char varname[20];
-  strcpy(varname, current_token.value.ToString());
+  if (strlen(current_token.value.value.string) > 20) {
+    error("FOR name variable too long");
+  }
+  strcpy(varname, current_token.value.value.string);
   assignment_statement();
   eat(TO);
-  while (lookup_var(varname).ToInt() <= expr().ToInt()) {
+  while (lookup_var(varname).value.number <= expr().value.number) {
     int incrVal = 1;
     if (current_token.type == STEP) {
       eat(STEP);
       Value v(expr());
-      incrVal = v.ToInt();
+      incrVal = v.value.number;
     }
     while (current_token.type != NEXT) {
       statement();
       eat(NEWLINE);
     }
 
-    store_var(varname, lookup_var(varname).ToInt() + incrVal);
+    store_var(varname, lookup_var(varname).value.number + incrVal);
     // return back to the expression
     pos = tempPos;
-    // line_number = tempLine;
+    line_number = tempLine;
     current_char = get_next_pgm_byte(pos);
     do {
       current_token = get_next_token();
@@ -906,26 +934,28 @@ void Interpreter::for_statement() {
 
 // statement: function_call | assignment_statement | empty
 Value Interpreter::function_call() {
-  int funcType = current_token.value.ToInt();
+  int funcType = current_token.value.value.number;
   eat(FUNC_CALL);
   eat(LPAREN);
 
   if (funcType == FUNC_CALL_PRINT) {
     Value right(expr());
     eat(RPAREN);
+    char *strVal = right.ToString();
 #ifdef LCD_SUPPORT
-    lcd_printf(right.ToString());
+    lcd_printf(strVal);
 #endif
 #ifdef AVR_TARGET
     if (repl_mode) {
-      writeln(right.ToString());
+      writeln(strVal);
     } else {
-      send_string(right.ToString());
+      send_string(strVal);
     }
 #endif
 #ifdef PC_TARGET
-    writeln(right.ToString());
+    writeln(strVal);
 #endif
+    free(strVal);
     return right;
   }
 #ifdef AVR_TARGET
@@ -958,7 +988,7 @@ Value Interpreter::function_call() {
   } else if (funcType == FUNC_CALL_DELAY) {
     Value right(expr());
     eat(RPAREN);
-    delayMs(right.ToInt());
+    delayMs(right.value.number);
     return right;
   } else if (funcType == FUNC_CALL_SUBSTR) {
     Value refVar(expr());
@@ -967,26 +997,26 @@ Value Interpreter::function_call() {
     eat(COMMA);
     Value len(expr());
     eat(RPAREN);
-    char newStr[len.ToInt() + 1];
-    memcpy(newStr, refVar.ToString(), len.ToInt());
-    newStr[len.ToInt()] = '\0';
+    char newStr[len.value.number + 1];
+    memcpy(newStr, refVar.value.string, len.value.number);
+    newStr[len.value.number] = '\0';
     return Value(newStr);
   } else if (funcType == FUNC_CALL_LEN) {
-    Value right(
-        (int)strlen(lookup_var(current_token.value.ToString()).ToString()));
+    Value right(expr());
+    Value leng((int)strlen(right.value.string));
     eat(RPAREN);
-    return right;
+    return leng;
   }
 #ifdef AVR_TARGET
   else if (funcType == FUNC_CALL_DDRA) {
     Value right(expr());
     eat(RPAREN);
-    DDRA = right.ToInt();
+    DDRA = right.value.number;
     return right;
   } else if (funcType == FUNC_CALL_PORTA) {
     Value right(expr());
     eat(RPAREN);
-    PORTA = right.ToInt();
+    PORTA = right.value.number;
     return right;
   } else if (funcType == FUNC_CALL_PINA) {
     eat(RPAREN);
@@ -995,32 +1025,32 @@ Value Interpreter::function_call() {
   } else if (funcType == FUNC_CALL_DDRB) {
     Value right(expr());
     eat(RPAREN);
-    DDRB = right.ToInt();
+    DDRB = right.value.number;
     return right;
   } else if (funcType == FUNC_CALL_DDRC) {
     Value right(expr());
     eat(RPAREN);
-    DDRC = right.ToInt();
+    DDRC = right.value.number;
     return right;
   } else if (funcType == FUNC_CALL_DDRD) {
     Value right(expr());
     eat(RPAREN);
-    DDRD = right.ToInt();
+    DDRD = right.value.number;
     return right;
   } else if (funcType == FUNC_CALL_PORTB) {
     Value right(expr());
     eat(RPAREN);
-    PORTB = right.ToInt();
+    PORTB = right.value.number;
     return right;
   } else if (funcType == FUNC_CALL_PORTC) {
     Value right(expr());
     eat(RPAREN);
-    PORTC = right.ToInt();
+    PORTC = right.value.number;
     return right;
   } else if (funcType == FUNC_CALL_PORTD) {
     Value right(expr());
     eat(RPAREN);
-    PORTD = right.ToInt();
+    PORTD = right.value.number;
     return right;
   } else if (funcType == FUNC_CALL_PINB) {
     eat(RPAREN);
@@ -1040,13 +1070,13 @@ Value Interpreter::function_call() {
     ADCSRA = 0x87; // ADC on, and divide by 128 for prescalar
   } else if (funcType == FUNC_CALL_SETPWM0) {
     Value right(expr());
-    if (right.ToInt() <= 0) {
+    if (right.value.number <= 0) {
 #if defined ATMEGA32 || defined ATMEGA1284
       PORTD &= ~(1 << 5);
 #else
       PORTB &= ~(1 << 1);
 #endif
-    } else if (right.ToInt() >= 255) {
+    } else if (right.value.number >= 255) {
 #if defined ATMEGA32 || defined ATMEGA1284
       PORTD |= (1 << 5);
 #else
@@ -1057,18 +1087,18 @@ Value Interpreter::function_call() {
       TCCR1B = (0 << ICNC1) | (0 << ICES1) | (0 << WGM13) | (1 << WGM12) |
                (0 << CS12) | (1 << CS11) | (1 << CS10);
       OCR1AH = 0x00;
-      OCR1AL = right.ToInt();
+      OCR1AL = right.value.number;
     }
     eat(RPAREN);
   } else if (funcType == FUNC_CALL_SETPWM1) {
     Value right(expr());
-    if (right.ToInt() <= 0) {
+    if (right.value.number <= 0) {
 #if defined ATMEGA32 || defined ATMEGA1284
       PORTD &= ~(1 << 4);
 #else
       PORTB &= ~(1 << 2);
 #endif
-    } else if (right.ToInt() >= 255) {
+    } else if (right.value.number >= 255) {
 #if defined ATMEGA32 || defined ATMEGA1284
       PORTD |= (1 << 4);
 #else
@@ -1079,13 +1109,13 @@ Value Interpreter::function_call() {
       TCCR1B = (0 << ICNC1) | (0 << ICES1) | (0 << WGM13) | (1 << WGM12) |
                (0 << CS12) | (1 << CS11) | (1 << CS10);
       OCR1BH = 0x00;
-      OCR1BL = right.ToInt();
+      OCR1BL = right.value.number;
     }
     eat(RPAREN);
   } else if (funcType == FUNC_CALL_AREAD) {
     Value pin(expr());
     eat(RPAREN);
-    ADMUX = 0x40 | pin.ToInt();
+    ADMUX = 0x40 | pin.value.number;
     _delay_ms(1);
     ADCSRA |= (1 << ADSC); // Start the A/D conversion
     while ((ADCSRA & (1 << ADSC)))
@@ -1105,7 +1135,7 @@ Value Interpreter::function_call() {
     eat(COMMA);
     Value col(expr());
     eat(RPAREN);
-    SetLCD_XY(row.ToInt(), col.ToInt());
+    SetLCD_XY(row.value.number, col.value.number);
   } else if (funcType == FUNC_CALL_CLEARLCD) {
     eat(RPAREN);
     ClearLCD();
@@ -1113,10 +1143,12 @@ Value Interpreter::function_call() {
 #endif
 #ifdef AVR_TARGET
   else if (funcType == FUNC_CALL_SENDSERIAL) {
+    char *tempStr = row.ToString();
     Value row(expr());
     eat(RPAREN);
-    send_string(row.ToString());
+    send_string(tempStr);
     send_string("\r\n");
+    free(tempStr);
   } else if (funcType == FUNC_CALL_RXSERIAL) {
     eat(RPAREN);
     get_string(serialRxBuf, MAXSTRLENGTH);
@@ -1125,7 +1157,7 @@ Value Interpreter::function_call() {
   } else if (funcType == FUNC_CALL_TXBYTE) {
     Value right(expr());
     eat(RPAREN);
-    send_byte((char)right.ToInt());
+    send_byte((char)right.value.number);
     Value v(0);
     return v;
   } else if (funcType == FUNC_CALL_RXBYTE) {
@@ -1263,13 +1295,13 @@ Value Interpreter::factor() {
     if (current_token.type == LPAREN) {
       // we have an array element here, look it up
       eat(LPAREN);
-      int index = factor().ToInt();
+      int index = factor().value.number;
       eat(RPAREN);
-      Value parentVal = lookup_var(token.value.ToString());
+      Value parentVal = lookup_var(token.value.value.string);
       Value v = parentVal.index_array(index);
       return v;
     } else {
-      Value v = lookup_var(token.value.ToString());
+      Value v = lookup_var(token.value.value.string);
       return v;
     }
   } else if (token.type == FUNC_CALL) {

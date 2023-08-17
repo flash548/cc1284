@@ -5,10 +5,6 @@
  * Author: z
  */
 
-#include "Boolean.h"
-#include "Double.h"
-#include "GenericValue.h"
-#include "Integer.h"
 #include "main.h"
 
 #ifndef __VALUE_H__
@@ -18,17 +14,22 @@
 
 enum TYPE { INTEGER, STRING, BOOLEAN, FLOAT };
 
+union ItemValue {
+  int number;
+  int *intArray;
+  double *dblArray;
+  double floatNumber;
+  bool bval;
+  char *string;
+};
+
 class Value {
 
 public:
-  void *item;
-  double floatNumber;
-  GenericValue value;
-  char str[MAXSTRLENGTH];
+  ItemValue value;
   bool isArray;
   int arraySize;
   TYPE type;
-  bool bval;
   bool ToBoolean();
   int ToInt() const;
   char *ToString();
