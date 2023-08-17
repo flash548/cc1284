@@ -58,7 +58,7 @@ public:
   int pos;
   int pgm_length;
   char current_char;
-  int line_number;
+  int line_number = 0;
   void error(char *err);
   void advance();
   char peek();

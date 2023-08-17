@@ -27,7 +27,7 @@ class Value {
 
 public:
   ItemValue value;
-  bool isArray;
+  bool isArray = false;
   int arraySize;
   TYPE type;
   bool ToBoolean();
@@ -40,6 +40,8 @@ public:
   Value(bool b);
   Value(TYPE t, int size);
   Value(double i);
+  // Value(const Value& v);
+  ~Value();
   Value index_array(int index);
   void update_array(int index, int val);
   void update_array(int index, double val);

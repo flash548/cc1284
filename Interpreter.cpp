@@ -6,7 +6,6 @@
  */
 
 #include "Interpreter.h"
-#include "main.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +17,7 @@
 #include "Serial.h"
 #include <avr/eeprom.h>
 #include <avr/io.h>
+#include <avr/pgmspace.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
 #endif
@@ -28,7 +28,7 @@
 Interpreter::Interpreter() {
   repl_mode = true;
   var_ptr = 0;
-  line_number = 1;
+  line_number = 0;
 }
 Interpreter::Interpreter(char *txt) {
   repl_mode = false;
@@ -43,7 +43,7 @@ Interpreter::Interpreter(char *txt) {
   current_char = get_next_pgm_byte(pos);
   current_token = get_next_token();
   var_ptr = 0;
-  line_number = 1;
+  line_number = 0;
 }
 
 Interpreter::Interpreter(char *txt, bool fromRam) {
@@ -55,7 +55,7 @@ Interpreter::Interpreter(char *txt, bool fromRam) {
   current_char = get_next_pgm_byte(pos);
   current_token = get_next_token();
   var_ptr = 0;
-  line_number = 1;
+  line_number = 0;
 }
 
 // default destructor
@@ -125,7 +125,7 @@ void Interpreter::error(char *err) {
 #else
     printf("Error :(... %s\n", err);
     printf("Current char: %c\n", current_char);
-    printf("Current line: %c\n", line_number);
+    printf("Current line: %i\n", line_number);
     printf("Current token val: %s\n", tempStr);
     free(tempStr);
 #ifdef PC_TARGET
@@ -388,7 +388,7 @@ Token Interpreter::_id() {
     t.type = OR;
     t.value = Value("OR");
   } else if (nocase_cmp(name, "XOR") == 0) {
-    t.type = NOT;
+    t.type = XOR;
     t.value = Value("XOR");
   } else if (nocase_cmp(name, "IF") == 0) {
     t.type = IF;
@@ -472,8 +472,6 @@ Token Interpreter::get_next_token() {
       while (current_char != '\n') {
         advance();
       }
-      line_number++;
-      advance();
       continue;
     }
 
@@ -654,7 +652,22 @@ void Interpreter::eat(TokenType tokType) {
   if (current_token.type == tokType) {
     current_token = get_next_token();
   } else {
-    printf("%i, %i\n", current_token.type, tokType);
+#ifdef AVR_TARGET
+    char str_current[10];
+    char str_expected[10];
+    for (unsigned char i = 0; i < 5; i++) {
+      strcpy_P(str_current,
+               (PGM_P)pgm_read_word(&(string_table[current_token.type + i])));
+      strcpy_P(str_expected,
+               (PGM_P)pgm_read_word(&(string_table[tokType + i])));
+    }
+    printf("Current: %s, Expected: %s\n", str_current, str_expected);
+#endif
+#ifdef PC_TARGET
+    const char *str_current = token_strings[current_token.type];
+    const char *str_expected = token_strings[tokType];
+    printf("Current Token: %s, Expected: %s\n", str_current, str_expected);
+#endif
     error("Token Mismatch");
   }
 }

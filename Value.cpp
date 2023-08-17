@@ -18,6 +18,7 @@
 #include <string.h>
 
 Value::Value() {}
+// Value::Value(const Value &a) { printf("Copy\n"); }
 // constructor for a INT VARIABLE
 Value::Value(int i) {
   ItemValue item;
@@ -59,6 +60,7 @@ Value::Value(double b) {
 // constructor for a ARRAY variable of TYPE
 Value::Value(TYPE t, int size) {
   type = t;
+  printf("ALLOC ARAY");
   ItemValue item;
   isArray = true;
   arraySize = size;
@@ -75,6 +77,20 @@ Value::Value(TYPE t, int size) {
   }
 
   value = item;
+}
+
+Value::~Value() {
+  if (type == STR) {
+    printf("FREEING STRING\n");
+    free(value.string);
+  } else if (isArray && type == INTEGER) {
+    printf("FREEING ARRAY\n");
+    free(value.intArray);
+    value.intArray = NULL;
+  } else if (isArray && type == FLOAT) {
+    printf("FREEING DB ARRAY\n");
+    free(value.dblArray);
+  }
 }
 
 Value operator+(const Value &v1, const Value &v2) {
