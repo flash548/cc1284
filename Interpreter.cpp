@@ -14,11 +14,11 @@
 #include <unistd.h>
 #endif
 #ifdef AVR_TARGET
-#include <avr/io.h>
-#include <util/delay.h>
-#include <avr/eeprom.h>
-#include <avr/wdt.h>
 #include "Serial.h"
+#include <avr/eeprom.h>
+#include <avr/io.h>
+#include <avr/wdt.h>
+#include <util/delay.h>
 #endif
 #ifdef LCD_SUPPORT
 #include "LCD.h"
@@ -89,39 +89,39 @@ void Interpreter::writeln(Value r) {
 }
 
 void Interpreter::error(char *err) {
-  // using program wants to handle the errors...thanks!
-  if (errorFunc != NULL) {
-    errorFunc(err);
-    return;
-  }
-
+  char *tempStr = current_token.value.ToString();
 #ifdef DEBUG_ON_LCD
   SetLCD_XY(0, 0);
   ClearLCD();
   lcd_printf("ERR: ");
   SetLCD_XY(1, 0);
   if (strlen(err) == 0)
-    lcd_printf(current_token.value.ToString());
+    lcd_printf(tempStr);
   else
     lcd_printf(err);
 #endif
 #ifdef DEBUG_ON_SERIAL
   send_string("ERR: ");
   if (strlen(err) == 0)
-    send_string(current_token.value.ToString());
-  else
+    send_string(tempStr);
+  else {
+    send_string(tempStr);
+    send_string("\n");
     send_string(err);
+  }
   send_string("\n");
 #endif
   if (!repl_mode) {
-#ifdef PC_TARGET
-    printf("Exiting...\n");
-    exit(1);
-
+#ifdef AVR_TARGET
+    send_string("Entering error loop...\n");
 #else
-    printf("Entering error loop...\n");
-    while (1)
-      ;
+    printf("Error :(... %s\n", err);
+    printf("Current char: %c\n", current_char);
+    printf("Current line: %i\n", line_number);
+    printf("Current token val: %s\n", tempStr);
+#ifdef PC_TARGET
+    exit(1);
+#endif
 #endif
   }
 }
@@ -263,6 +263,9 @@ Token Interpreter::_id() {
   if (nocase_cmp(name, "PRINT") == 0) {
     t.type = FUNC_CALL;
     t.value = Value(FUNC_CALL_PRINT);
+  } else if (nocase_cmp(name, "ASSERT") == 0) {
+    t.type = FUNC_CALL;
+    t.value = Value(FUNC_CALL_ASSERT);
   } else if (nocase_cmp(name, "LEN") == 0) {
     t.type = FUNC_CALL;
     t.value = Value(FUNC_CALL_LEN);
@@ -379,7 +382,7 @@ Token Interpreter::_id() {
     t.type = OR;
     t.value = Value("OR");
   } else if (nocase_cmp(name, "XOR") == 0) {
-    t.type = NOT;
+    t.type = XOR;
     t.value = Value("XOR");
   } else if (nocase_cmp(name, "IF") == 0) {
     t.type = IF;
@@ -441,7 +444,7 @@ Token Interpreter::get_next_token() {
         }
 
         advance();
-        // Token t;
+        line_number++;
         t.type = NEWLINE;
         t.value = Value('\n');
         return t;
@@ -453,6 +456,16 @@ Token Interpreter::get_next_token() {
 
     if (isdigit(current_char)) {
       return parse_number();
+    }
+
+    // start of comment
+    // just eat the comment here til end of line or end of file
+    if (current_char == '\'') {
+      advance();
+      while (current_char != '\n') {
+        advance();
+      }
+      continue;
     }
 
     if (current_char == '"') {
@@ -655,6 +668,22 @@ void Interpreter::eat(TokenType tokType) {
   if (current_token.type == tokType) {
     current_token = get_next_token();
   } else {
+#ifdef AVR_TARGET
+    char str_current[10];
+    char str_expected[10];
+    for (unsigned char i = 0; i < 5; i++) {
+      strcpy_P(str_current,
+               (PGM_P)pgm_read_word(&(string_table[current_token.type + i])));
+      strcpy_P(str_expected,
+               (PGM_P)pgm_read_word(&(string_table[tokType + i])));
+    }
+    printf("Current: %s, Expected: %s\n", str_current, str_expected);
+#endif
+#ifdef PC_TARGET
+    const char *str_current = token_strings[current_token.type];
+    const char *str_expected = token_strings[tokType];
+    printf("Current Token: %s, Expected: %s\n", str_current, str_expected);
+#endif
     error("Token Mismatch");
   }
 }
@@ -775,6 +804,7 @@ void Interpreter::gosub_statement() {
   char subname[20];
   strcpy(subname, current_token.value.ToString());
   int tempPos = pos;
+  int tempLine = line_number;
   eat(ID);
   bool foundLabel = false;
   pos = 0; // rewind to beginning of program
@@ -793,6 +823,7 @@ void Interpreter::gosub_statement() {
 
       // return to the caller..
       pos = tempPos;
+      line_number = tempLine;
       current_char = get_next_pgm_byte(pos);
       current_token = get_next_token();
     }
@@ -837,6 +868,7 @@ void Interpreter::if_statement() {
 void Interpreter::while_statement() {
   eat(WHILE);
   int tempPos = pos - 1;
+  int tempLine = line_number;
   eat(LPAREN);
   while (expr().ToBoolean()) {
     eat(RPAREN);
@@ -847,6 +879,7 @@ void Interpreter::while_statement() {
     }
     // return back to the expression
     pos = tempPos;
+    line_number = tempLine;
     current_char = get_next_pgm_byte(pos);
     current_token = get_next_token();
     eat(LPAREN);
@@ -871,6 +904,7 @@ void Interpreter::while_statement() {
 // statement_list() NEWLINE NEXT ID
 void Interpreter::for_statement() {
   int tempPos = pos + 3;
+  int tempLine = line_number;
   eat(FOR);
   char varname[20];
   strcpy(varname, current_token.value.ToString());
@@ -891,6 +925,7 @@ void Interpreter::for_statement() {
     store_var(varname, lookup_var(varname).number + incrVal);
     // return back to the expression
     pos = tempPos;
+    line_number = tempLine;
     current_char = get_next_pgm_byte(pos);
     do {
       current_token = get_next_token();
@@ -921,16 +956,19 @@ Value Interpreter::function_call() {
   if (funcType == FUNC_CALL_PRINT) {
     Value right(expr());
     eat(RPAREN);
+    char *strVal = right.ToString();
 #ifdef LCD_SUPPORT
-    lcd_printf(right.ToString());
+    lcd_printf(strVal);
 #endif
 #ifdef AVR_TARGET
     if (repl_mode) {
-      writeln(right.ToString());
+      writeln(strVal);
+    } else {
+      send_string(strVal);
     }
 #endif
 #ifdef PC_TARGET
-    writeln(right.ToString());
+    writeln(strVal);
 #endif
     return right;
   }
@@ -948,7 +986,16 @@ Value Interpreter::function_call() {
     return right;
   }
 #endif
-  else if (funcType == FUNC_CALL_UBOUND) {
+  else if (funcType == FUNC_CALL_ASSERT) {
+#ifdef PC_TARGET
+    Value item(expr());
+    eat(RPAREN);
+    if (!item.ToBoolean()) {
+      printf("Assertion failed at line: %i\n", line_number);
+      exit(1);
+    }
+#endif
+  } else if (funcType == FUNC_CALL_UBOUND) {
     Value right(expr().arraySize - 1);
     eat(RPAREN);
     return right;
@@ -969,10 +1016,10 @@ Value Interpreter::function_call() {
     newStr[len.number] = '\0';
     return Value(newStr);
   } else if (funcType == FUNC_CALL_LEN) {
-    Value right(
-        (int)strlen(lookup_var(current_token.value.ToString()).ToString()));
+    Value right(expr());
+    Value leng((int)strlen(right.str));
     eat(RPAREN);
-    return right;
+    return leng;
   }
 #ifdef AVR_TARGET
   else if (funcType == FUNC_CALL_DDRA) {
