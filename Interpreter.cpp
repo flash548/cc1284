@@ -16,6 +16,7 @@
 #ifdef AVR_TARGET
 #include "Serial.h"
 #include <avr/eeprom.h>
+#include <avr/pgmspace.h>
 #include <avr/io.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
@@ -123,6 +124,8 @@ void Interpreter::error(char *err) {
     exit(1);
 #endif
 #endif
+  } else {
+    
   }
 }
 
@@ -673,9 +676,9 @@ void Interpreter::eat(TokenType tokType) {
     char str_expected[10];
     for (unsigned char i = 0; i < 5; i++) {
       strcpy_P(str_current,
-               (PGM_P)pgm_read_word(&(string_table[current_token.type + i])));
+               (PGM_P)pgm_read_word(&(token_strings[current_token.type + i])));
       strcpy_P(str_expected,
-               (PGM_P)pgm_read_word(&(string_table[tokType + i])));
+               (PGM_P)pgm_read_word(&(token_strings[tokType + i])));
     }
     printf("Current: %s, Expected: %s\n", str_current, str_expected);
 #endif

@@ -73,7 +73,17 @@ int main(void) {
         while (1) { // enter into REPL loop forever
           send_string(">> ");
           get_string(cmdBuf, MAXSTRLENGTH);
-          i.execute_statement(cmdBuf);
+		  if (i.nocase_cmp(cmdBuf, "DUMP") == 0) {
+			int idx=0;
+			char c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
+			while (c != '\0' && idx < EEPROM_PGM_SIZE) {
+				send_byte(c);
+				idx++;
+				c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
+			}
+		  } else {
+          	i.execute_statement(cmdBuf);
+		  }
         }
       }
       break;

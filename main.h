@@ -7,11 +7,11 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#define PC_TARGET
-// #define AVR_TARGET
+//#define PC_TARGET
+#define AVR_TARGET
 
 #ifdef AVR_TARGET
-
+#include <avr/pgmspace.h>
 // declare type of chip for internal use
 #define ATMEGA1284
 // #define ATMEGA32
@@ -164,7 +164,7 @@ const char _NEXT[] PROGMEM = "NEXT";             // 49
 const char _GOSUB[] PROGMEM = "GOSUB";           // 50
 const char _LABEL[] PROGMEM = "LABEL";           // 51
 const char _COMMENT[] PROGMEM = "COMMENT";       // 52
-const char *token_strings[] PROGMEM =
+const char *const token_strings[] PROGMEM =
     {
         _MUL,        // 0
         _MINUS,      // 1
@@ -219,12 +219,11 @@ const char *token_strings[] PROGMEM =
         _GOSUB,      // 50
         _LABEL,      // 51
         _COMMENT,    // 52
-}
+};
 #endif
 #ifdef PC_TARGET
     static const char *
     token_strings[] = {
-#endif
         "MUL",        // 0
         "MINUS",      // 1
         "MOD",        // 2
@@ -279,5 +278,5 @@ const char *token_strings[] PROGMEM =
         "LABEL",      // 51
         "COMMENT",    // 52
 };
-
+#endif
 #endif /* MAIN_H_ */
