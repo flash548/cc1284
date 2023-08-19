@@ -30,6 +30,7 @@ bool charRx = false; // if a char was received during bootloader wait time
 char rxChar = '\0';  // the received char at the UART
 
 int main(void) {
+  MCUSR &= ~(1 << WDRF);
   wdt_disable();
 #ifdef ATMEGA1284
   UCSR0B = 0x18; // enable TX and RX UART chans
@@ -50,7 +51,6 @@ int main(void) {
   char mcu_val[4];
   sprintf(&mcu_val[0], "%02x\n", MCUSR);
   send_string(mcu_val);
-  MCUSR = 0x00;
 
   while (waitPeriod++ < 20) // wait time for bootloader until launching
                             // interpreter (20 * 100mS) = 2sec

@@ -125,7 +125,7 @@ void Interpreter::error(char *err) {
 #endif
 #endif
   } else {
-    
+
   }
 }
 
@@ -672,8 +672,8 @@ void Interpreter::eat(TokenType tokType) {
     current_token = get_next_token();
   } else {
 #ifdef AVR_TARGET
-    char str_current[10];
-    char str_expected[10];
+    char str_current[20];
+    char str_expected[20];
     for (unsigned char i = 0; i < 5; i++) {
       strcpy_P(str_current,
                (PGM_P)pgm_read_word(&(token_strings[current_token.type + i])));

@@ -1,3 +1,6 @@
 *.o
 *.bas
 .DS_Store/
+basic.bin
+basic.elf
+basic.hex
