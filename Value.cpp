@@ -45,7 +45,7 @@ Value::Value(char i) {
 Value::Value(const char *s) {
   ItemValue item;
   int len = strlen(s);
-  item.string = (char *)malloc((len * sizeof(char)) + 1);
+  item.string = (char *)malloc(((len + 1) * sizeof(char)));
   strcpy(item.string, s);
   item.string[len] = '\0';
   value = item;
@@ -93,7 +93,7 @@ Value::~Value() {
     zombied = true;
   if (type == STRING && !zombied) {
     free(value.string);
-  } else if (isArray && type == INTEGER && !zombied) {
+  } else if (isArray && type == INTEGER && && !zombied) {
     free(value.intArray);
 
     value.intArray = NULL;

@@ -101,7 +101,7 @@ void Interpreter::writeln(const char *r) {
 }
 
 void Interpreter::error(char *err) {
-  send_string("Error...\n");
+  send_string("Error...\r\n");
   char *tempStr = current_token.value.ToString();
 #ifdef DEBUG_ON_LCD
   SetLCD_XY(0, 0);
@@ -117,22 +117,23 @@ void Interpreter::error(char *err) {
   send_string("ERR: ");
   if (strlen(err) == 0) {
     send_string(tempStr);
-    send_string("\n");
+    send_string("\r\n");
   } else {
     send_string(tempStr);
-    send_string("\n");
+    send_string("\r\n");
     send_string(err);
   }
-  send_string("\n");
+  send_string("\r\n");
 #endif
   if (!repl_mode) {
 #ifdef AVR_TARGET
-    send_string("Entering error loop...\n");
+    writeln("Entering error loop...");
+    free(tempStr);
 #else
-    printf("Error :(... %s\n", err);
-    printf("Current char: %c\n", current_char);
-    printf("Current line: %i\n", line_number);
-    printf("Current token val: %s\n", tempStr);
+    printf("Error :(... %s\r\n", err);
+    printf("Current char: %c\r\n", current_char);
+    printf("Current line: %i\r\n", line_number);
+    printf("Current token val: %s\r\n", tempStr);
     free(tempStr);
 #ifdef PC_TARGET
     exit(1);
@@ -970,7 +971,7 @@ void Interpreter::for_statement() {
 
 // statement: function_call | assignment_statement | empty
 Value Interpreter::function_call() {
-  send_string("Functioncall\n");
+  send_string("Functioncall\r\n");
   int funcType = current_token.value.value.number;
   eat(FUNC_CALL);
   eat(LPAREN);
@@ -982,16 +983,7 @@ Value Interpreter::function_call() {
 #ifdef LCD_SUPPORT
     lcd_printf(strVal);
 #endif
-#ifdef AVR_TARGET
-    if (repl_mode) {
-      writeln(strVal);
-    } else {
-      send_string(strVal);
-    }
-#endif
-#ifdef PC_TARGET
     writeln(strVal);
-#endif
     free(strVal);
     return right;
   }
