@@ -12,7 +12,7 @@
 #include <util/delay.h>
 
 // send null-terminated string out the UART
-void send_string(char *buf)
+void send_string(const char *buf)
 {
 	int counter = 0;
 	do

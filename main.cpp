@@ -30,6 +30,7 @@ bool charRx = false; // if a char was received during bootloader wait time
 char rxChar = '\0';  // the received char at the UART
 
 int main(void) {
+  MCUSR &= ~(1 << WDRF);
   wdt_disable();
 #ifdef ATMEGA1284
   UCSR0B = 0x18; // enable TX and RX UART chans
@@ -50,8 +51,6 @@ int main(void) {
   char mcu_val[4];
   sprintf(&mcu_val[0], "%02x\n", MCUSR);
   send_string(mcu_val);
-  MCUSR = 0x00;
-
   while (waitPeriod++ < 20) // wait time for bootloader until launching
                             // interpreter (20 * 100mS) = 2sec
   {
@@ -73,7 +72,20 @@ int main(void) {
         while (1) { // enter into REPL loop forever
           send_string(">> ");
           get_string(cmdBuf, MAXSTRLENGTH);
-          i.execute_statement(cmdBuf);
+		  if (i.nocase_cmp(cmdBuf, "DUMP") == 0) {
+			int idx=0;
+			char c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
+			while (c != '\0' && idx < EEPROM_PGM_SIZE) {
+				send_byte(c);
+				idx++;
+				c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
+			}
+		  } else if (i.nocase_cmp(cmdBuf, "RUN") == 0) {
+			charRx = false;
+			break;
+		  }else {
+          	i.execute_statement(cmdBuf);
+		  }
         }
       }
       break;
@@ -99,7 +111,7 @@ int main(void) {
   }
 
   PORTC = 0x00;
-
+  send_string("Running EEPROM program\n");
   Interpreter i(buffer);
   i.run();
   while (1) {

@@ -32,6 +32,7 @@ Interpreter::Interpreter() {
 }
 Interpreter::Interpreter(char *txt) {
   repl_mode = false;
+  from_ram = false;
   text = txt;
   pos = 0;
 #ifdef AVR_TARGET
@@ -64,10 +65,13 @@ Interpreter::~Interpreter() {} //~Lexer
 // gets next pgm byte from either EEPROM or RAM
 char Interpreter::get_next_pgm_byte(int idx) {
 #ifdef AVR_TARGET
-  if (!repl_mode && !from_ram)
+  if (!repl_mode && !from_ram) {
     return (char)eeprom_read_byte((uint8_t *)&text[idx]);
-  else
+  }
+  else {
+    send_string("HERER\n");
     return text[idx];
+  }
 #endif
 #ifdef PC_TARGET
   return text[idx];
@@ -97,6 +101,7 @@ void Interpreter::writeln(const char *r) {
 }
 
 void Interpreter::error(char *err) {
+  send_string("Error...\n");
   char *tempStr = current_token.value.ToString();
 #ifdef DEBUG_ON_LCD
   SetLCD_XY(0, 0);
@@ -110,9 +115,10 @@ void Interpreter::error(char *err) {
 #endif
 #ifdef DEBUG_ON_SERIAL
   send_string("ERR: ");
-  if (strlen(err) == 0)
+  if (strlen(err) == 0) {
     send_string(tempStr);
-  else {
+    send_string("\n");
+  } else {
     send_string(tempStr);
     send_string("\n");
     send_string(err);
@@ -233,7 +239,7 @@ Token Interpreter::parse_string() {
   return t;
 }
 
-int nocase_cmp(char *str, const char *str2) {
+int Interpreter::nocase_cmp(char *str, const char *str2) {
   int i = 0;
   while (str2[i] != '\0') {
     if (toupper(str[i]) != toupper(str2[i]))
@@ -440,7 +446,6 @@ Token Interpreter::_id() {
 
 Token Interpreter::get_next_token() {
   Token t;
-
   while (current_char != '\0') {
 
     if (isspace(current_char)) {
@@ -643,6 +648,10 @@ Token Interpreter::get_next_token() {
     error("Invalid token detected");
   }
 
+  send_byte(current_char);
+  send_byte('\n');
+  send_string(itoa(pos, "%i", 10));
+  send_byte('\n');
   t.type = END;
   t.value = Value('\0');
   return t;
@@ -657,9 +666,9 @@ void Interpreter::eat(TokenType tokType) {
     char str_expected[10];
     for (unsigned char i = 0; i < 5; i++) {
       strcpy_P(str_current,
-               (PGM_P)pgm_read_word(&(string_table[current_token.type + i])));
+               (PGM_P)pgm_read_word(&(token_strings[current_token.type + i])));
       strcpy_P(str_expected,
-               (PGM_P)pgm_read_word(&(string_table[tokType + i])));
+               (PGM_P)pgm_read_word(&(token_strings[tokType + i])));
     }
     printf("Current: %s, Expected: %s\n", str_current, str_expected);
 #endif
@@ -685,7 +694,7 @@ void Interpreter::execute_statement(char *line) {
 }
 
 // program: statement_list
-void Interpreter::run() { statement_list(); }
+void Interpreter::run() { send_string("Statement list\n"); statement_list(); }
 
 // statement: function_call | if_statement | assignment_statement | empty
 void Interpreter::statement_list() {
@@ -701,25 +710,38 @@ void Interpreter::statement_list() {
 
 // statement: function_call | assignment_statement | empty
 void Interpreter::statement() {
+  send_string("statement\n");
   if (current_token.type == ID || current_token.type == DIM) {
     assignment_statement();
   } else if (current_token.type == FUNC_CALL) {
     function_call();
   } else if (current_token.type == WHILE) {
+        send_string("WHILE\n");
     while_statement();
   } else if (current_token.type == FOR) {
+        send_string("FOR\n");
     for_statement();
   } else if (current_token.type == IF) {
+        send_string("IF\n");
     if_statement();
   } else if (current_token.type == GOSUB) {
+        send_string("SOSUB\n");
     gosub_statement();
   } else if (current_token.type == INT) {
-    Value r(expr());
+    send_string("INT\n");
     if (repl_mode) {
+      Value r(expr());
       char *tempStr = r.ToString();
       writeln(tempStr);
       free(tempStr);
     }
+  } else {
+    send_string("OTHER TOKEN\n");
+    char str_current[20];
+      strcpy_P(str_current,
+               (PGM_P)pgm_read_word(&(token_strings[current_token.type])));
+    send_string(str_current);
+    send_string("\n");
   }
 }
 
@@ -948,6 +970,7 @@ void Interpreter::for_statement() {
 
 // statement: function_call | assignment_statement | empty
 Value Interpreter::function_call() {
+  send_string("Functioncall\n");
   int funcType = current_token.value.value.number;
   eat(FUNC_CALL);
   eat(LPAREN);
@@ -1157,8 +1180,8 @@ Value Interpreter::function_call() {
 #endif
 #ifdef AVR_TARGET
   else if (funcType == FUNC_CALL_SENDSERIAL) {
-    char *tempStr = row.ToString();
     Value row(expr());
+    char *tempStr = row.ToString();
     eat(RPAREN);
     send_string(tempStr);
     send_string("\r\n");

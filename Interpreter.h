@@ -89,7 +89,7 @@ public:
   Value lookup_var(const char *name);
   bool store_var(const char *name, Value& v);
   void delayMs(int number);
-
+  int nocase_cmp(char *str, const char *str2);
 #ifdef AVR_TARGET
   int strlen_ee(char *str);
   int freeRAM();
@@ -110,6 +110,5 @@ private:
 
 }; // Lexer
 
-int nocase_cmp(char *str, const char *str2);
 
 #endif //__LEXER_H__

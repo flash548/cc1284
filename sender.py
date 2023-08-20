@@ -12,6 +12,8 @@ try:
         if line.strip().startswith("'"): continue
         else: outfile.write(line)
     outfile.close()
+    print ("Waiting for byte...")
+    s.readline()
     with open("test1.bas", 'r') as f:
         byte = f.read(1)
         while byte != "":

@@ -9,7 +9,7 @@
 #define SERIAL_H_
 
 #ifdef AVR_TARGET
-void send_string(char *buf);
+void send_string(const char *buf);
 void get_string(char *buf, uint16_t max_size);
 char get_byte();
 void send_byte(char c);

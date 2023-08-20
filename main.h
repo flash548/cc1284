@@ -7,8 +7,8 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#define PC_TARGET
-// #define AVR_TARGET
+//#define PC_TARGET
+#define AVR_TARGET
 
 #ifdef AVR_TARGET
 #include <avr/pgmspace.h>
@@ -164,7 +164,7 @@ const char _NEXT[] PROGMEM = "NEXT";             // 49
 const char _GOSUB[] PROGMEM = "GOSUB";           // 50
 const char _LABEL[] PROGMEM = "LABEL";           // 51
 const char _COMMENT[] PROGMEM = "COMMENT";       // 52
-const char const* token_strings[] PROGMEM =
+const char *const token_strings[] PROGMEM =
     {
         _MUL,        // 0
         _MINUS,      // 1
@@ -218,8 +218,8 @@ const char const* token_strings[] PROGMEM =
         _NEXT,       // 49
         _GOSUB,      // 50
         _LABEL,      // 51
-        _COMMENT,    // 52
-}
+        _COMMENT    // 52
+};
 #endif
 #ifdef PC_TARGET
     static const char *
