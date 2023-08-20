@@ -29,7 +29,11 @@ int eePtr = 0;       // pointer to next write location in EEPROM
 bool charRx = false; // if a char was received during bootloader wait time
 char rxChar = '\0';  // the received char at the UART
 
-int main(void) {
+/**
+ * @brief Embedded Target entrpoint
+ * 
+ */
+void main(void) {
   MCUSR &= ~(1 << WDRF);
   wdt_disable();
 #ifdef ATMEGA1284
@@ -47,10 +51,6 @@ int main(void) {
 #else
   send_string("MEGA32 BASIC\n");
 #endif
-  send_string("MCUSR: ");
-  char mcu_val[4];
-  sprintf(&mcu_val[0], "%02x\n", MCUSR);
-  send_string(mcu_val);
 
   while (waitPeriod++ < 20) // wait time for bootloader until launching
                             // interpreter (20 * 100mS) = 2sec
@@ -61,18 +61,15 @@ int main(void) {
                           // or branch to REPL
       charRx = true;
       PORTC = 0x20;
-      send_string("received:");
-      send_byte(rxChar);
-      send_byte('\n');
       if (rxChar == ':') { // if a ':' was first char, then branch to REPL
         Interpreter i;
 #ifdef LCD_SUPPORT
         InitLCD(false);
 #endif
-        char cmdBuf[MAXSTRLENGTH];
+        char cmdBuf[MAXREPLLINE];
         while (1) { // enter into REPL loop forever
           send_string(">> ");
-          get_string(cmdBuf, MAXSTRLENGTH);
+          get_string(cmdBuf, MAXREPLLINE+2);
 		  if (i.nocase_cmp(cmdBuf, "DUMP") == 0) {
 			int idx=0;
 			char c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
@@ -113,19 +110,25 @@ int main(void) {
   Interpreter i(buffer);
   i.run();
   while (1) {
-    // if we get here, something bad happened in the interpreter, toggle LEDs
+    // if we get here, something bad happened in the interpreter, or we exited the
+	// program - in which case - toggle LEDs
     // for notification
     _delay_ms(500);
     PORTC = ~0xAA;
     _delay_ms(500);
     PORTC = ~0x55;
   }
-  return 0;
 }
 #endif
 
 #ifdef PC_TARGET
-
+/**
+ * @brief Entrypoint for running on PC
+ * 
+ * @param argc 
+ * @param argv 
+ * @return int 
+ */
 int main(int argc, char **argv) {
   if (argc > 1) {
     FILE *fp = fopen(argv[1], "r");
@@ -139,6 +142,8 @@ int main(int argc, char **argv) {
     Interpreter interpreter(contents);
     interpreter.run();
   } else {
+
+	// some default code to run if no file
     Interpreter interpreter("print(2+3)\ndelay(1000)");
     interpreter.run();
   }

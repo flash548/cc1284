@@ -680,7 +680,9 @@ void Interpreter::eat(TokenType tokType) {
       strcpy_P(str_expected,
                (PGM_P)pgm_read_word(&(token_strings[tokType + i])));
     }
-    printf("Current: %s, Expected: %s\n", str_current, str_expected);
+    char err_msg[100];
+    sprintf(err_msg, "Current: %s, Expected: %s\n", str_current, str_expected);
+    writeln(err_msg);
 #endif
 #ifdef PC_TARGET
     const char *str_current = token_strings[current_token.type];
@@ -712,6 +714,8 @@ void Interpreter::statement_list() {
   while (current_token.type != END) {
     if (current_token.type == NEWLINE) {
       eat(NEWLINE);
+    } else if (current_token.type == COLON) {
+      eat(COLON);
     }
     statement();
   }
@@ -964,11 +968,7 @@ Value Interpreter::function_call() {
     lcd_printf(strVal);
 #endif
 #ifdef AVR_TARGET
-    if (repl_mode) {
-      writeln(strVal);
-    } else {
-      send_string(strVal);
-    }
+    writeln(strVal);
 #endif
 #ifdef PC_TARGET
     writeln(strVal);

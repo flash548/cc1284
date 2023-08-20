@@ -43,6 +43,9 @@
 
 #endif
 
+// MAX length for line of code on REPL
+#define MAXREPLLINE 512
+
 // MAX length a string variable can be
 #define MAXSTRLENGTH 25
 
