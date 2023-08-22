@@ -22,6 +22,13 @@ void send_string(char* buf)
 	
 }
 
+// send a single byte out the UART
+void send_byte(char c)
+{
+	while ( !( UCSR0A & (1<<UDRE0)) );
+	UDR0 = c;
+}
+
 // receive a newline terminated string (or one that reaches max_size)
 // blocks until it receives one
 void get_string(char* buf, uint16_t max_size)
@@ -29,9 +36,27 @@ void get_string(char* buf, uint16_t max_size)
 	uint16_t count = 0;
 	do {
 		while ( !(UCSR0A & (1<<RXC0)) );
-		buf[count] = UDR0;
-		if (buf[count] == '\n' || buf[count] == '\r') break;
-		count++;
+		char rxChar = UDR0;
+
+        if (rxChar == '\b') {
+            if (count > 0) {
+                // delete the previous character
+                count--;
+                buf[count] = '\0';
+                // echo back backspace/erase sequence
+                send_byte('\b');
+                send_byte(' ');
+                send_byte('\b');
+            }
+        } else {
+            buf[count] = rxChar;
+            // echo back
+            send_byte(rxChar);
+		    if (rxChar == '\n' || rxChar == '\r') break;
+            count++;
+        }
+
+
 	} while ((count < max_size));
 	
 	if (count == max_size) { buf[count-1] = '\0'; } // truncate / terminate string
@@ -51,11 +76,5 @@ char get_byte()
 	}
 }
 
-// send a single byte out the UART
-void send_byte(char c)
-{
-	while ( !( UCSR0A & (1<<UDRE0)) );
-	UDR0 = c;
-}
 
 #endif

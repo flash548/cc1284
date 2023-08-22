@@ -33,7 +33,7 @@ char rxChar = '\0';  // the received char at the UART
  * @brief Embedded Target entrpoint
  * 
  */
-void main(void) {
+int main(void) {
   MCUSR &= ~(1 << WDRF);
   wdt_disable();
 #ifdef ATMEGA1284
@@ -47,9 +47,9 @@ void main(void) {
                // interpreter
   PORTC = 0xFF;
 #ifdef ATMEGA1284
-  send_string("1284 BASIC\n");
+  send_string("1284 BASIC\r\n");
 #else
-  send_string("MEGA32 BASIC\n");
+  send_string("MEGA32 BASIC\r\n");
 #endif
 
   while (waitPeriod++ < 20) // wait time for bootloader until launching
@@ -79,8 +79,10 @@ void main(void) {
 				c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
 			}
 		  } else {
+            send_string("\r\n");  
           	i.execute_statement(cmdBuf);
 		  }
+          send_string("\r\n");
         }
       }
       break;
@@ -118,6 +120,8 @@ void main(void) {
     _delay_ms(500);
     PORTC = ~0x55;
   }
+
+  return 0;
 }
 #endif
 

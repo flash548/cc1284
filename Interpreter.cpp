@@ -107,19 +107,19 @@ void Interpreter::error(char *err) {
     send_string(tempStr);
   else {
     send_string(tempStr);
-    send_string("\n");
+    send_string("\r\n");
     send_string(err);
   }
-  send_string("\n");
+  send_string("\r\n");
 #endif
   if (!repl_mode) {
 #ifdef AVR_TARGET
-    send_string("Entering error loop...\n");
+    send_string("Entering error loop...\r\n");
 #else
-    printf("Error :(... %s\n", err);
-    printf("Current char: %c\n", current_char);
-    printf("Current line: %i\n", line_number);
-    printf("Current token val: %s\n", tempStr);
+    printf("Error :(... %s\r\n", err);
+    printf("Current char: %c\r\n", current_char);
+    printf("Current line: %i\r\n", line_number);
+    printf("Current token val: %s\r\n", tempStr);
 #ifdef PC_TARGET
     exit(1);
 #endif
