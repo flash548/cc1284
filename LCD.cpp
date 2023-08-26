@@ -5,7 +5,6 @@
  *  Author: z
  */
 
-#ifdef LCD_SUPPORT
 #ifdef AVR_TARGET
 
 #include "LCD.h"
@@ -116,5 +115,4 @@ void SetRS(bool high) {
     onPortA ? PORTA &= ~(1 << 0) : PORTB &= ~(1 << 0);
 }
 
-#endif
 #endif

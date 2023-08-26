@@ -1,7 +1,7 @@
 import serial
 import sys
 
-s = serial.Serial('/dev/cu.usbserial-1410', 115200)
+s = serial.Serial('/dev/ttyUSB0', 115200)
 lines = None
 filterLines = None
 try:

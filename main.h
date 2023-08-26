@@ -30,7 +30,7 @@
 #endif
 
 // enable LCD support
-// #define LCD_SUPPORT
+#define LCD_SUPPORT
 
 // enable UART at 115.2kbaud
 #define UART_SUPPORT

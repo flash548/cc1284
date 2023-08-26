@@ -347,6 +347,9 @@ Token Interpreter::_id() {
   } else if (nocase_cmp(name, "CLEARLCD") == 0) {
     t.type = FUNC_CALL;
     t.value = Value(FUNC_CALL_CLEARLCD);
+  } else if (nocase_cmp(name, "LCDPRINT") == 0) {
+    t.type = FUNC_CALL;
+    t.value = Value(FUNC_CALL_LCDPRINT);
   }
 #endif
   else if (nocase_cmp(name, "SENDSERIAL") == 0) {
@@ -521,7 +524,7 @@ Token Interpreter::get_next_token() {
     if (current_char == ':') {
       advance();
       // Token t;
-      t.type = COLON;
+      t.type = NEWLINE;
       t.value = Value(':');
       return t;
     }
@@ -702,7 +705,7 @@ void Interpreter::execute_statement(char *line) {
   pgm_length = strlen(text);
   current_char = get_next_pgm_byte(pos);
   current_token = get_next_token();
-  statement(); // execute the statement
+  statement_list(); // execute the statement
 }
 
 // program: statement_list
@@ -714,8 +717,6 @@ void Interpreter::statement_list() {
   while (current_token.type != END) {
     if (current_token.type == NEWLINE) {
       eat(NEWLINE);
-    } else if (current_token.type == COLON) {
-      eat(COLON);
     }
     statement();
   }
@@ -964,9 +965,6 @@ Value Interpreter::function_call() {
     Value right(expr());
     eat(RPAREN);
     char *strVal = right.ToString();
-#ifdef LCD_SUPPORT
-    lcd_printf(strVal);
-#endif
 #ifdef AVR_TARGET
     writeln(strVal);
 #endif
@@ -1156,6 +1154,12 @@ Value Interpreter::function_call() {
   } else if (funcType == FUNC_CALL_CLEARLCD) {
     eat(RPAREN);
     ClearLCD();
+  } else if (funcType == FUNC_CALL_LCDPRINT) {
+    Value right(expr());
+    char *strVal = right.ToString();
+    lcd_printf(strVal);
+    eat(RPAREN);
+    return right;
   }
 #endif
 #ifdef AVR_TARGET

@@ -42,6 +42,7 @@
 #define FUNC_CALL_SETPWM1 29
 #define FUNC_CALL_SUBSTR 30
 #define FUNC_CALL_ASSERT 31
+#define FUNC_CALL_LCDPRINT 32
 
 class Interpreter {
 public:
