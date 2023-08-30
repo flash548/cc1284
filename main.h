@@ -7,8 +7,8 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-//#define PC_TARGET
-#define AVR_TARGET
+#define PC_TARGET
+//#define AVR_TARGET
 
 #ifdef AVR_TARGET
 #include <avr/pgmspace.h>

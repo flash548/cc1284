@@ -62,28 +62,10 @@ int main(void) {
       charRx = true;
       PORTC = 0x20;
       if (rxChar == ':') { // if a ':' was first char, then branch to REPL
-        Interpreter i;
 #ifdef LCD_SUPPORT
         InitLCD(false);
 #endif
-        char cmdBuf[MAXREPLLINE];
-        while (1) { // enter into REPL loop forever
-          send_string(">> ");
-          get_string(cmdBuf, MAXREPLLINE+2, true);
-		  if (i.nocase_cmp(cmdBuf, "DUMP") == 0) {
-			int idx=0;
-			char c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
-			while (c != '\0' && idx < EEPROM_PGM_SIZE) {
-				send_byte(c);
-				idx++;
-				c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
-			}
-		  } else {
-            send_string("\r\n");  
-          	i.execute_statement(cmdBuf);
-		  }
-          send_string("\r\n");
-        }
+        do_repl();
       }
       break;
     }
@@ -125,6 +107,39 @@ int main(void) {
 }
 #endif
 
+void do_repl() {
+
+  Interpreter i;
+  char cmdBuf[MAXREPLLINE];
+  while (1) { // enter into REPL loop forever
+#ifdef AVR_TARGET
+    send_string(">> ");
+    get_string(cmdBuf, MAXREPLLINE+2, true);
+#else
+    printf(">> ");
+    fgets(cmdBuf, sizeof(cmdBuf), stdin);
+#endif
+#ifdef AVR_TARGET   
+    if (i.nocase_cmp(cmdBuf, "DUMP") == 0) {
+      int idx=0;
+      char c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
+      while (c != '\0' && idx < EEPROM_PGM_SIZE) {
+        send_byte(c);
+        idx++;
+        c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
+      }
+    } else {
+      send_string("\r\n");  
+      i.execute_statement(cmdBuf);
+    }
+    send_string("\r\n");
+#else
+    i.execute_statement(cmdBuf);
+    printf("\r\n");
+#endif
+  }
+}
+
 #ifdef PC_TARGET
 /**
  * @brief Entrypoint for running on PC
@@ -146,10 +161,7 @@ int main(int argc, char **argv) {
     Interpreter interpreter(contents);
     interpreter.run();
   } else {
-
-	// some default code to run if no file
-    Interpreter interpreter("print(2+3)\ndelay(1000)");
-    interpreter.run();
+    do_repl();
   }
 }
 
