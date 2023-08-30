@@ -18,6 +18,7 @@
 #else
 #include <stdio.h>
 #endif
+#include <strings.h>
 #ifdef LCD_SUPPORT
 #include "LCD.h"
 #endif
@@ -31,7 +32,7 @@ char rxChar = '\0';  // the received char at the UART
 
 /**
  * @brief Embedded Target entrpoint
- * 
+ *
  */
 int main(void) {
   MCUSR &= ~(1 << WDRF);
@@ -94,8 +95,8 @@ int main(void) {
   Interpreter i(buffer);
   i.run();
   while (1) {
-    // if we get here, something bad happened in the interpreter, or we exited the
-	// program - in which case - toggle LEDs
+    // if we get here, something bad happened in the interpreter, or we exited
+    // the program - in which case - toggle LEDs
     // for notification
     _delay_ms(500);
     PORTC = ~0xAA;
@@ -109,19 +110,71 @@ int main(void) {
 
 void do_repl() {
 
-  Interpreter i;
+  char tempPrg[1000];
+  tempPrg[0] = '\0';
   char cmdBuf[MAXREPLLINE];
   while (1) { // enter into REPL loop forever
 #ifdef AVR_TARGET
     send_string(">> ");
-    get_string(cmdBuf, MAXREPLLINE+2, true);
+    get_string(cmdBuf, MAXREPLLINE + 2, true);
 #else
     printf(">> ");
     fgets(cmdBuf, sizeof(cmdBuf), stdin);
 #endif
-#ifdef AVR_TARGET   
-    if (i.nocase_cmp(cmdBuf, "DUMP") == 0) {
-      int idx=0;
+    if (strcmp(cmdBuf, "NEW\n") == 0) {
+      // erase temp buffer, and start new program buffer
+      tempPrg[0] = '\0';
+      while (1) {
+        // eat new lines into the buffer - until "DONE"
+#ifdef AVR_TARGET
+        get_string(cmdBuf, MAXREPLLINE + 2, true);
+#else
+        fgets(cmdBuf, sizeof(cmdBuf), stdin);
+#endif
+        if (strcmp(cmdBuf, "DONE\n") == 0) {
+          break;
+        } else {
+          if (tempPrg[0] == '\0') {
+            // its an empty buffer, start from beginning
+            strcpy(tempPrg, cmdBuf);
+          } else {
+            strcat(tempPrg, cmdBuf);
+          }
+        }
+      }
+    } else if (strcmp(cmdBuf, "LIST\n") == 0) {
+      // dump temp buffer program
+#ifdef AVR_TARGET
+      send_string(tempPrg);
+      send_string("\r\n");
+#else
+      printf("%s\n", tempPrg);
+#endif
+    } else if (strcmp(cmdBuf, "RUN\n") == 0) {
+      // run the temp buffer
+      Interpreter i(tempPrg);
+      i.run();
+    } else if (strcmp(cmdBuf, "SAVE\n") == 0) {
+#ifdef AVR_TARGET
+      while (!eeprom_is_ready()) {
+        PORTC = 0x40;
+      };
+      int i = 0;
+      for (i=0; i < strlen(tempPrg); i++) {
+        eeprom_write_byte((uint8_t *)&buffer[i],
+                          tempPrg[i]); // write byte to EEPROM
+      }
+
+      eeprom_write_byte((uint8_t *)&buffer[i], '\0'); 
+#else
+      FILE *fp = fopen("test.base", "w");
+      fwrite(tempPrg, sizeof(char), strlen(tempPrg), fp); // write byte to EEPROM
+      fclose(fp);
+#endif
+    }
+#ifdef AVR_TARGET
+    else if (strcmp(cmdBuf, "DUMP\n") == 0) {
+      int idx = 0;
       char c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
       while (c != '\0' && idx < EEPROM_PGM_SIZE) {
         send_byte(c);
@@ -129,13 +182,17 @@ void do_repl() {
         c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
       }
     } else {
-      send_string("\r\n");  
+      send_string("\r\n");
       i.execute_statement(cmdBuf);
     }
     send_string("\r\n");
 #else
-    i.execute_statement(cmdBuf);
-    printf("\r\n");
+    else {
+      // evaluate the line
+      Interpreter i;
+      i.execute_statement(cmdBuf);
+      printf("\r\n");
+    }
 #endif
   }
 }
@@ -143,10 +200,10 @@ void do_repl() {
 #ifdef PC_TARGET
 /**
  * @brief Entrypoint for running on PC
- * 
- * @param argc 
- * @param argv 
- * @return int 
+ *
+ * @param argc
+ * @param argv
+ * @return int
  */
 int main(int argc, char **argv) {
   if (argc > 1) {
@@ -154,7 +211,7 @@ int main(int argc, char **argv) {
     fseek(fp, 0L, SEEK_END);
     size_t sz = ftell(fp);
     rewind(fp);
-    char contents[sz+1];
+    char contents[sz + 1];
     fread(contents, sz, 1, fp);
     fclose(fp);
     contents[sz] = '\0';
