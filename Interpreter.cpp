@@ -284,6 +284,10 @@ Token Interpreter::_id() {
   } else if (nocase_cmp(name, "DELAY") == 0) {
     t.type = FUNC_CALL;
     t.value = Value(FUNC_CALL_DELAY);
+  
+  } else if (nocase_cmp(name, "SUBSTR") == 0) {
+    t.type = FUNC_CALL;
+    t.value = Value(FUNC_CALL_SUBSTR);
   }
 #if defined ATMEGA32 || defined ATMEGA1284
   else if (nocase_cmp(name, "DDRA") == 0) {
@@ -675,15 +679,17 @@ void Interpreter::eat(TokenType tokType) {
     current_token = get_next_token();
   } else {
 #ifdef AVR_TARGET
-    char str_current[20];
-    char str_expected[20];
+    char str_current[10];
+    char str_expected[10];
+    char err_msg[100];
+    sprintf(err_msg, "%i, %i\n", current_token.type, tokType);
+    writeln(err_msg);
     for (unsigned char i = 0; i < 5; i++) {
       strcpy_P(str_current,
                (PGM_P)pgm_read_word(&(token_strings[current_token.type + i])));
       strcpy_P(str_expected,
                (PGM_P)pgm_read_word(&(token_strings[tokType + i])));
     }
-    char err_msg[100];
     sprintf(err_msg, "Current: %s, Expected: %s\n", str_current, str_expected);
     writeln(err_msg);
 #endif
@@ -845,7 +851,8 @@ void Interpreter::if_statement() {
   if (expr().ToBoolean()) {
     eat(THEN);
     statement();
-    eat(NEWLINE);
+    // optional newline
+    if (current_token.type == NEWLINE) eat(NEWLINE);
     if (current_token.type == ELSE) {
       // if there was an else clause, eat it up...
       eat(ELSE);
@@ -855,9 +862,10 @@ void Interpreter::if_statement() {
     }
   } else {
     eat(THEN);
-    while (current_token.type != NEWLINE)
+    while (current_token.type != NEWLINE 
+            && current_token.type != ELSE)
       current_token = get_next_token();
-    eat(NEWLINE);
+    if (current_token.type == NEWLINE) eat(NEWLINE);
     if (current_token.type == ELSE) {
       eat(ELSE);
       statement();
@@ -1170,7 +1178,7 @@ Value Interpreter::function_call() {
     send_string("\r\n");
   } else if (funcType == FUNC_CALL_RXSERIAL) {
     eat(RPAREN);
-    get_string(serialRxBuf, MAXSTRLENGTH);
+    get_string(serialRxBuf, MAXSTRLENGTH, false);
     Value ret(serialRxBuf);
     return ret;
   } else if (funcType == FUNC_CALL_TXBYTE) {

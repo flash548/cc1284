@@ -11,7 +11,7 @@
 
 #ifdef AVR_TARGET
 void send_string(char* buf);
-void get_string(char* buf, uint16_t max_size);
+void get_string(char* buf, uint16_t max_size, bool echo);
 char get_byte();
 void send_byte(char c);
 #endif

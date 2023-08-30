@@ -69,7 +69,7 @@ int main(void) {
         char cmdBuf[MAXREPLLINE];
         while (1) { // enter into REPL loop forever
           send_string(">> ");
-          get_string(cmdBuf, MAXREPLLINE+2);
+          get_string(cmdBuf, MAXREPLLINE+2, true);
 		  if (i.nocase_cmp(cmdBuf, "DUMP") == 0) {
 			int idx=0;
 			char c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);

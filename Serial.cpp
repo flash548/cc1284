@@ -31,14 +31,14 @@ void send_byte(char c)
 
 // receive a newline terminated string (or one that reaches max_size)
 // blocks until it receives one
-void get_string(char* buf, uint16_t max_size)
+void get_string(char* buf, uint16_t max_size, bool echo)
 {
 	uint16_t count = 0;
 	do {
 		while ( !(UCSR0A & (1<<RXC0)) );
 		char rxChar = UDR0;
 
-        if (rxChar == '\b') {
+        if (echo && rxChar == '\b') {
             if (count > 0) {
                 // delete the previous character
                 count--;
@@ -50,8 +50,10 @@ void get_string(char* buf, uint16_t max_size)
             }
         } else {
             buf[count] = rxChar;
-            // echo back
-            send_byte(rxChar);
+            if (echo) {
+                // echo back
+                send_byte(rxChar);
+            }
 		    if (rxChar == '\n' || rxChar == '\r') break;
             count++;
         }
