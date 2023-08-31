@@ -44,6 +44,7 @@
 #define FUNC_CALL_ASSERT 31
 #define FUNC_CALL_LCDPRINT 32
 
+
 class Interpreter {
 public:
   bool repl_mode; // are we in REPL mode?  if so, read pgm data from RAM not
@@ -86,20 +87,12 @@ public:
   Value lookup_var(const char *name);
   bool store_var(const char *name, Value v);
   void delayMs(int number);
-
-  void (*errorFunc)(char *errorText);
-
 #ifdef AVR_TARGET
   int strlen_ee(char *str);
   int freeRAM();
 #endif
-protected:
-private:
-  // functions
-public:
   Interpreter();
   Interpreter(char *txt);
-  Interpreter(char *txt, void (*errorFunc)(char *));
   ~Interpreter();
   int nocase_cmp(char *str, char *str2);
 

@@ -46,23 +46,6 @@ Interpreter::Interpreter(char *txt) {
   var_ptr = 0;
 }
 
-// constructor with given program buffer and error function
-Interpreter::Interpreter(char *txt, void (*errorFuncName)(char *)) {
-  repl_mode = false;
-  text = txt;
-  pos = 0;
-#ifdef AVR_TARGET
-  pgm_length = strlen_ee(text);
-#endif
-#ifdef PC_TARGET
-  pgm_length = strlen(text);
-#endif
-  current_char = get_next_pgm_byte(pos);
-  current_token = get_next_token();
-  var_ptr = 0;
-  errorFunc = errorFuncName;
-}
-
 // default destructor
 Interpreter::~Interpreter() {}
 
@@ -641,10 +624,8 @@ Token Interpreter::get_next_token() {
       t.value = Value('/');
       return t;
     }
-
     if (current_char == '\\') {
       advance();
-      // Token t;
       t.type = INTDIV;
       t.value = Value('\\');
       return t;
@@ -1238,7 +1219,7 @@ Value Interpreter::term() {
   Value result = factor();
 
   while (current_token.type == MUL || current_token.type == DIV ||
-         current_token.type == AND || current_token.type == OR ||
+         current_token.type == INTDIV || current_token.type == AND || current_token.type == OR ||
          current_token.type == XOR || current_token.type == GT ||
          current_token.type == GTE || current_token.type == LT ||
          current_token.type == LTE || current_token.type == MOD ||
@@ -1256,11 +1237,11 @@ Value Interpreter::term() {
       eat(DIV);
       result = result / factor();
     }
-    // else if (token.type == INTDIV)
-    // {
-    // eat(INTDIV);
-    // result = result.intDiv(factor());
-    // }
+    else if (token.type == INTDIV)
+    {
+      eat(INTDIV);
+      result = result.intDiv(factor());
+    }
     else if (token.type == MOD) {
       eat(MOD);
       result = result % factor();

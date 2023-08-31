@@ -35,19 +35,26 @@ Value::Value(char i)
 }
 // constructor for a STRING variable
 Value::Value(const char* s) 
-{ 
+{
+  number = 0;
 	strcpy(str, s); 
 	type = STRING; 
 }
 // constructor for a BOOLEAN variable
 Value::Value(bool b) 
 { 
+  if (b) {
+    number = 1;
+  } else {
+    number = 0;
+  }
 	bval = b; 
 	type = BOOLEAN; 
 }
 // constructor for a FLOAT variable
 Value::Value(double b)
 {
+  number = (int)b;
 	floatNumber = b;
 	type = FLOAT;
 }
@@ -204,7 +211,7 @@ Value operator/(const Value& v1, const Value& v2)
 	}
 	
 	// must be both INTs
-	Value v(v1.number / v2.number);
+	Value v((float)v1.number / (float)v2.number);
 	return v;
 }
 
@@ -699,4 +706,8 @@ void Value::update_array(int index, double val)
 	if (isArray) {
 		dblArray[index] = val;
 	}
+}
+
+Value Value::intDiv(const Value& v2) {
+  return Value(number / v2.number);
 }

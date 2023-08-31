@@ -29,6 +29,7 @@ class Value
 	bool bval;
 	bool ToBoolean();
 	char* ToString();
+  Value intDiv(const Value& v2);
 	Value();
 	Value(int i);
 	Value(char i);
