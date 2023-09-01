@@ -115,17 +115,17 @@ void do_repl() {
   char tempPrg[1000];
   tempPrg[0] = '\0';
   char cmdBuf[MAXREPLLINE];
+  Interpreter i;
   while (1) { // enter into REPL loop forever
 #ifdef AVR_TARGET
     send_string(">> ");
     get_string(cmdBuf, MAXREPLLINE + 2, true);
-    if (strcmp(cmdBuf, "NEW") == 0) {
-      send_string("\r\n");
 #else
     printf(">> ");
     fgets(cmdBuf, sizeof(cmdBuf), stdin);
-    if (strcmp(cmdBuf, "NEW\n") == 0) {
+    cmdBuf[strcspn(cmdBuf, "\n")] = 0;
 #endif
+    if (strcmp(cmdBuf, "NEW") == 0) {
       // erase temp buffer, and start new program buffer
       tempPrg[0] = '\0';
       while (1) {
@@ -133,11 +133,11 @@ void do_repl() {
 #ifdef AVR_TARGET
         get_string(cmdBuf, MAXREPLLINE + 2, true);
         send_string("\r\n");
-        if (strcmp(cmdBuf, "DONE") == 0) {
 #else
         fgets(cmdBuf, sizeof(cmdBuf), stdin);
-        if (strcmp(cmdBuf, "DONE\n") == 0) {
+        cmdBuf[strcspn(cmdBuf, "\n")] = 0;
 #endif
+        if (strcmp(cmdBuf, "DONE") == 0) {
           break;
         } else {
           if (tempPrg[0] == '\0') {
@@ -155,21 +155,18 @@ void do_repl() {
         }
       }
       // dump temp buffer program
-#ifdef AVR_TARGET
     } else if (strcmp(cmdBuf, "LIST") == 0) {
+#ifdef AVR_TARGET
       send_string(tempPrg);
       send_string("\r\n");
-    } else if (strcmp(cmdBuf, "RUN") == 0) {
 #else
-    } else if (strcmp(cmdBuf, "LIST\n") == 0) {
       printf("%s\n", tempPrg);
-    } else if (strcmp(cmdBuf, "RUN\n") == 0) {
 #endif
+    } else if (strcmp(cmdBuf, "RUN") == 0) {
       // run the temp buffer
-      Interpreter i(tempPrg);
-      i.run();
-#ifdef AVR_TARGET
+      i.execute_code(tempPrg);
     } else if (strcmp(cmdBuf, "SAVE") == 0) {
+#ifdef AVR_TARGET
       while (!eeprom_is_ready()) {
         PORTC = 0x40;
       };
@@ -181,7 +178,6 @@ void do_repl() {
 
       eeprom_write_byte((uint8_t *)&buffer[i], '\0'); 
 #else
-    } else if (strcmp(cmdBuf, "SAVE\n") == 0) {
       FILE *fp = fopen("test.base", "w");
       fwrite(tempPrg, sizeof(char), strlen(tempPrg), fp); // write byte to EEPROM
       fclose(fp);
@@ -197,17 +193,17 @@ void do_repl() {
         idx++;
         c = (char)eeprom_read_byte((uint8_t *)&buffer[idx]);
       }
-    } else {
+    } 
+#endif 
+#ifdef AVR_TARGET
+    else {
       send_string("\r\n");
-      Interpreter i;
-      i.execute_statement(cmdBuf);
+      i.execute_code(cmdBuf);
     }
     send_string("\r\n");
 #else
     else {
-      // evaluate the line
-      Interpreter i;
-      i.execute_statement(cmdBuf);
+      i.execute_code(cmdBuf);
       printf("\r\n");
     }
 #endif

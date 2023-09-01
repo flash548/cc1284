@@ -70,7 +70,7 @@ public:
   void writeln(Value r);
   Token get_next_token();
   void eat(TokenType tokType);
-  void execute_statement(char *line);
+  void execute_code(char *line);
   void run();
   void statement_list();
   void statement();
@@ -87,6 +87,7 @@ public:
   Value lookup_var(const char *name);
   bool store_var(const char *name, Value v);
   void delayMs(int number);
+  void evaluate_and_print();
 #ifdef AVR_TARGET
   int strlen_ee(char *str);
   int freeRAM();
@@ -95,7 +96,6 @@ public:
   Interpreter(char *txt);
   ~Interpreter();
   int nocase_cmp(char *str, char *str2);
-
 protected:
 private:
   Interpreter(const Interpreter &c);

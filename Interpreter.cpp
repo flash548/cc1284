@@ -684,7 +684,7 @@ void Interpreter::eat(TokenType tokType) {
 }
 
 // just runs a single statement from REPL mode
-void Interpreter::execute_statement(char *line) {
+void Interpreter::execute_code(char *line) {
   // set everything up here just if we were running a whole program..
   //  source will obviously be from RAM - not EEPROM
   text = line;
@@ -723,11 +723,15 @@ void Interpreter::statement() {
     if_statement();
   else if (current_token.type == GOSUB)
     gosub_statement();
-  else if (current_token.type == INT) {
-    Value r(expr());
-    if (repl_mode) {
-      writeln(r.ToString());
-    }
+  else {
+    evaluate_and_print();
+  }
+}
+
+void Interpreter::evaluate_and_print() {
+  Value r(expr());
+  if (repl_mode) {
+    writeln(r.ToString());
   }
 }
 
@@ -747,31 +751,34 @@ void Interpreter::assignment_statement() {
       eat(LPAREN);
       int index = expr().number;
       eat(RPAREN);
-      eat(EQ);
-      Value parentValue = lookup_var(varname);
-      Value result = expr();
-      if (result.type == INTEGER)
-        parentValue.update_array(index, result.number);
-      else if (result.type == FLOAT)
-        parentValue.update_array(index, result.floatNumber);
+      if (current_token.type == EQ) {
+        eat(EQ);
+        Value parentValue = lookup_var(varname);
+        Value result = expr();
+        if (result.type == INTEGER)
+          parentValue.update_array(index, result.number);
+        else if (result.type == FLOAT)
+          parentValue.update_array(index, result.floatNumber);
+      } else {
+        // evaulate the array element
+        pos = 0;
+        current_char = get_next_pgm_byte(pos);
+        current_token = get_next_token();
+        evaluate_and_print();
+      }
     } else {
-      // regular old variable assignment...maybe. (might be a REPL statement)
+      // regular old variable assignment...maybe
       if (current_token.type == EQ) {
         eat(EQ);
         Value right(expr());
         store_var(varname, right);
       } else {
-        // must just be a REPL statement or just some useless line, just eval
-        // the ID
-        //  so rewind the program pointer to beginning of line and run expr() on
-        //  it...
+        // evaulate some void context variable or expression that's not 
+        // an array element expression
         pos = 0;
         current_char = get_next_pgm_byte(pos);
         current_token = get_next_token();
-        Value right(expr());
-        if (repl_mode) {
-          writeln(right.ToString());
-        }
+        evaluate_and_print();
       }
     }
   } else {
@@ -1303,7 +1310,7 @@ Value Interpreter::factor() {
     if (current_token.type == LPAREN) {
       // we have an array element here, look it up
       eat(LPAREN);
-      int index = factor().number;
+      int index = expr().number;
       eat(RPAREN);
       Value parentVal = lookup_var(token.value.ToString());
       Value v = parentVal.index_array(index);

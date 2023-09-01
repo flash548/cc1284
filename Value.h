@@ -23,7 +23,7 @@ class Value
 	int number;
 	double floatNumber;
 	char str[MAXSTRLENGTH];
-	bool isArray;
+	bool isArray = false;
 	int arraySize;
 	TYPE type;
 	bool bval;

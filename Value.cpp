@@ -25,6 +25,7 @@ Value::Value(int i)
 	number = i; 
 	sprintf(str, "%i", number); 
 	type = INTEGER; 
+	isArray = false;
 }
 // constructor for a CHAR/INT variable
 Value::Value(char i) 
@@ -32,13 +33,15 @@ Value::Value(char i)
 	number = (int)i; 
 	sprintf(str, "%i", number); 
 	type = INTEGER; 
+	isArray = false;
 }
 // constructor for a STRING variable
 Value::Value(const char* s) 
 {
-  number = 0;
+  	number = 0;
 	strcpy(str, s); 
 	type = STRING; 
+	isArray = false;
 }
 // constructor for a BOOLEAN variable
 Value::Value(bool b) 
@@ -50,6 +53,7 @@ Value::Value(bool b)
   }
 	bval = b; 
 	type = BOOLEAN; 
+	isArray = false;
 }
 // constructor for a FLOAT variable
 Value::Value(double b)
@@ -57,6 +61,7 @@ Value::Value(double b)
   number = (int)b;
 	floatNumber = b;
 	type = FLOAT;
+	isArray = false;
 }
 // constructor for a ARRAY variable of TYPE
 Value::Value(TYPE t, int size)
@@ -85,7 +90,7 @@ Value operator+(const Value& v1, const Value& v2)
 			return v;
 		}
 		else if (v1.type == FLOAT) {
-			sprintf(tmp, "%lf", v1.floatNumber);
+			sprintf(tmp, "%f", v1.floatNumber);
 			strcpy(tmp, v1.str);
 			strcat(tmp, v2.str);
 			Value v(tmp);
@@ -101,7 +106,7 @@ Value operator+(const Value& v1, const Value& v2)
 		}
 		else if (v2.type == FLOAT) {
 			char tmp2[MAXSTRLENGTH];
-			sprintf(tmp2, "%lf", v2.floatNumber);
+			sprintf(tmp2, "%f", v2.floatNumber);
 			strcpy(tmp, v1.str);
 			strcat(tmp, tmp2);
 			Value v(tmp);
@@ -326,7 +331,7 @@ Value operator&(const Value& v1, const Value& v2)
 		}
 		else if (v2.type == FLOAT) {
 			char tmp2[MAXSTRLENGTH];
-			sprintf(tmp2, "%lf", v2.floatNumber);
+			sprintf(tmp2, "%f", v2.floatNumber);
 			strcpy(tmp, v1.str);
 			strcat(tmp, tmp2);
 			Value v(tmp);
@@ -675,7 +680,7 @@ char* Value::ToString()
 		else return "FALSE";
 	}
 	else if (type == FLOAT) {
-		sprintf(str, "%lf", floatNumber);
+		sprintf(str, "%f", floatNumber);
 		return str;
 	}
 	else {
@@ -689,8 +694,11 @@ Value Value::index_array(int index)
 	if (isArray) {
 		if (type == INTEGER) return Value(intArray[index]);
 		else if (type == FLOAT) return Value(dblArray[index]);
+	} else if (type == STRING) {
+		char buf[1];
+		sprintf(buf, "%c", str[index]);
+		return Value(buf);
 	}
-	
 	return Value(-1);
 }
 
