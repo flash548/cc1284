@@ -695,7 +695,7 @@ Value Value::index_array(int index)
 		if (type == INTEGER) return Value(intArray[index]);
 		else if (type == FLOAT) return Value(dblArray[index]);
 	} else if (type == STRING) {
-		char buf[1];
+		char buf[2];
 		sprintf(buf, "%c", str[index]);
 		return Value(buf);
 	}

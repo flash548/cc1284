@@ -120,9 +120,11 @@ void do_repl() {
 #ifdef AVR_TARGET
     send_string(">> ");
     get_string(cmdBuf, MAXREPLLINE + 2, true);
+    send_string("\r\n");
 #else
     printf(">> ");
     fgets(cmdBuf, sizeof(cmdBuf), stdin);
+    cmdBuf[strcspn(cmdBuf, "\r")] = 0;
     cmdBuf[strcspn(cmdBuf, "\n")] = 0;
 #endif
     if (strcmp(cmdBuf, "NEW") == 0) {
@@ -135,19 +137,21 @@ void do_repl() {
         send_string("\r\n");
 #else
         fgets(cmdBuf, sizeof(cmdBuf), stdin);
+        cmdBuf[strcspn(cmdBuf, "\r")] = 0;
         cmdBuf[strcspn(cmdBuf, "\n")] = 0;
 #endif
         if (strcmp(cmdBuf, "DONE") == 0) {
+          tempPrg[strlen(tempPrg)+1] = 0;
           break;
         } else {
           if (tempPrg[0] == '\0') {
             // its an empty buffer, start from beginning
             strcpy(tempPrg, cmdBuf);
-            strcat(tempPrg, "\n");
+            strcat(tempPrg, "\r\n");
           } else {
 #ifdef AVR_TARGET
             strcat(tempPrg, cmdBuf);
-            strcat(tempPrg, "\n");
+            strcat(tempPrg, "\r\n");
 #else
             strcat(tempPrg, cmdBuf);
 #endif
@@ -195,6 +199,12 @@ void do_repl() {
       }
     } 
 #endif 
+    else if (strcmp(cmdBuf, "") == 0) {
+#ifdef AVR_TARGET
+        send_string("\r\n");
+#endif
+        continue;
+    }
 #ifdef AVR_TARGET
     else {
       send_string("\r\n");
