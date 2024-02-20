@@ -68,6 +68,7 @@ Value::Value(TYPE t, int size)
 {
     type = t;
     isArray = true;
+    arraySize = size;
     if (t == INTEGER) {
 	    intArray = (int *) malloc(size*sizeof(int));
 	    for (int i = 0; i < size; i++) { intArray[i] = 0; }

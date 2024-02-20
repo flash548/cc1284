@@ -669,6 +669,7 @@ Token Interpreter::get_next_token() {
 void Interpreter::eat(TokenType tokType) {
   if (current_token.type == tokType) {
     current_token = get_next_token();
+
   } else {
 #ifdef AVR_TARGET
     char str_current[10];
@@ -712,16 +713,28 @@ void Interpreter::run() { statement_list(); }
 // statement: function_call | if_statement | assignment_statement | empty
 void Interpreter::statement_list() {
   statement();
+  if (current_token.type == NEWLINE) {
+    eat(NEWLINE);
+  }
+
+tryagain:
   while (current_token.type != END) {
     if (current_token.type == NEWLINE) {
       eat(NEWLINE);
+      goto tryagain;
     }
+
     statement();
   }
 }
 
 // statement: function_call | assignment_statement | empty
 void Interpreter::statement() {
+  if (current_token.type == NEWLINE) {
+    eat(NEWLINE);
+    return; 
+  }
+
   if (current_token.type == ID || current_token.type == DIM)
     assignment_statement();
   else if (current_token.type == FUNC_CALL)
@@ -932,9 +945,10 @@ void Interpreter::for_statement() {
       Value v(expr());
       incrVal = v.number;
     }
+    while (current_token.type == NEWLINE) eat(NEWLINE);
     while (current_token.type != NEXT) {
       statement();
-      eat(NEWLINE);
+      if (current_token.type == NEWLINE) eat(NEWLINE);
     }
 
     store_var(varname, lookup_var(varname).number + incrVal);
