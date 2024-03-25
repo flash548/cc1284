@@ -7,8 +7,8 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-//#define PC_TARGET
-//#define AVR_TARGET
+#define PC_TARGET
+// #define AVR_TARGET
 
 #ifdef AVR_TARGET
 #include <avr/pgmspace.h>
@@ -167,119 +167,117 @@ const char _NEXT[] PROGMEM = "NEXT";             // 49
 const char _GOSUB[] PROGMEM = "GOSUB";           // 50
 const char _LABEL[] PROGMEM = "LABEL";           // 51
 const char _COMMENT[] PROGMEM = "COMMENT";       // 52
-const char *const token_strings[] PROGMEM =
-    {
-        _MUL,        // 0
-        _MINUS,      // 1
-        _MOD,        // 2
-        _PLUS,       // 3
-        _DIV,        // 4
-        _LSHIFT,     // 5
-        _RSHIFT,     // 6
-        _AND,        // 7
-        _OR,         // 8
-        _XOR,        // 9
-        _IF,         // 10
-        _ELSE,       // 11
-        _THEN,       // 12
-        _ID,         // 13
-        _NOT,        // 14
-        _GT,         // 15
-        _LT,         // 16
-        _LTE,        // 17
-        _GTE,        // 18
-        _EQ,         // 19
-        _NEQ,        // 20
-        _TRUE,       // 21
-        _FALSE,      // 22
-        _NEWLINE,    // 23
-        _RETURN,     // 24
-        _STR_CONCAT, // 25
-        _COMMA,      // 26
-        _COLON,      // 27
-        _INCR,       // 28
-        _DECR,       // 29
-        _POW,        // 30
-        _INTDIV,     // 31
-        _LPAREN,     // 32
-        _RPAREN,     // 33
-        _END,        // 34
-        _INT,        // 35
-        _STR,        // 36
-        _BOOL,       // 37
-        _END_IF,     // 38
-        _WHILE,      // 39
-        _WEND,       // 40
-        _DIM,        // 41
-        _LET,        // 42
-        _FLOATNUM,   // 43
-        _AS,         // 44
-        _FUNC_CALL,  // 45
-        _FOR,        // 46
-        _TO,         // 47
-        _STEP,       // 48
-        _NEXT,       // 49
-        _GOSUB,      // 50
-        _LABEL,      // 51
-        _COMMENT,    // 52
+const char *const token_strings[] PROGMEM = {
+    _MUL,        // 0
+    _MINUS,      // 1
+    _MOD,        // 2
+    _PLUS,       // 3
+    _DIV,        // 4
+    _LSHIFT,     // 5
+    _RSHIFT,     // 6
+    _AND,        // 7
+    _OR,         // 8
+    _XOR,        // 9
+    _IF,         // 10
+    _ELSE,       // 11
+    _THEN,       // 12
+    _ID,         // 13
+    _NOT,        // 14
+    _GT,         // 15
+    _LT,         // 16
+    _LTE,        // 17
+    _GTE,        // 18
+    _EQ,         // 19
+    _NEQ,        // 20
+    _TRUE,       // 21
+    _FALSE,      // 22
+    _NEWLINE,    // 23
+    _RETURN,     // 24
+    _STR_CONCAT, // 25
+    _COMMA,      // 26
+    _COLON,      // 27
+    _INCR,       // 28
+    _DECR,       // 29
+    _POW,        // 30
+    _INTDIV,     // 31
+    _LPAREN,     // 32
+    _RPAREN,     // 33
+    _END,        // 34
+    _INT,        // 35
+    _STR,        // 36
+    _BOOL,       // 37
+    _END_IF,     // 38
+    _WHILE,      // 39
+    _WEND,       // 40
+    _DIM,        // 41
+    _LET,        // 42
+    _FLOATNUM,   // 43
+    _AS,         // 44
+    _FUNC_CALL,  // 45
+    _FOR,        // 46
+    _TO,         // 47
+    _STEP,       // 48
+    _NEXT,       // 49
+    _GOSUB,      // 50
+    _LABEL,      // 51
+    _COMMENT,    // 52
 };
 #endif
 #ifdef PC_TARGET
-    static const char *
-    token_strings[] = {
-        "MUL",        // 0
-        "MINUS",      // 1
-        "MOD",        // 2
-        "PLUS",       // 3
-        "DIV",        // 4
-        "LSHIFT",     // 5
-        "RSHIFT",     // 6
-        "AND",        // 7
-        "OR",         // 8
-        "XOR",        // 9
-        "IF",         // 10
-        "ELSE",       // 11
-        "THEN",       // 12
-        "ID",         // 13
-        "NOT",        // 14
-        "GT",         // 15
-        "LT",         // 16
-        "LTE",        // 17
-        "GTE",        // 18
-        "EQ",         // 19
-        "NEQ",        // 20
-        "TRUE",       // 21
-        "FALSE",      // 22
-        "NEWLINE",    // 23
-        "RETURN",     // 24
-        "STR_CONCAT", // 25
-        "COMMA",      // 26
-        "COLON",      // 27
-        "INCR",       // 28
-        "DECR",       // 29
-        "POW",        // 30
-        "INTDIV",     // 31
-        "LPAREN",     // 32
-        "RPAREN",     // 33
-        "END",        // 34
-        "INT",        // 35
-        "STR",        // 36
-        "BOOL",       // 37
-        "END_IF",     // 38
-        "WHILE",      // 39
-        "WEND",       // 40
-        "DIM",        // 41
-        "LET",        // 42
-        "FLOATNUM",   // 43
-        "AS",         // 44
-        "FUNC_CALL",  // 45
-        "FOR",        // 46
-        "TO",         // 47
-        "STEP",       // 48
-        "NEXT",       // 49
-        "GOSUB",      // 50
-        "LABEL",      // 51
-        "COMMENT",    // 52
+static const char *token_strings[] = {
+    "MUL",        // 0
+    "MINUS",      // 1
+    "MOD",        // 2
+    "PLUS",       // 3
+    "DIV",        // 4
+    "LSHIFT",     // 5
+    "RSHIFT",     // 6
+    "AND",        // 7
+    "OR",         // 8
+    "XOR",        // 9
+    "IF",         // 10
+    "ELSE",       // 11
+    "THEN",       // 12
+    "ID",         // 13
+    "NOT",        // 14
+    "GT",         // 15
+    "LT",         // 16
+    "LTE",        // 17
+    "GTE",        // 18
+    "EQ",         // 19
+    "NEQ",        // 20
+    "TRUE",       // 21
+    "FALSE",      // 22
+    "NEWLINE",    // 23
+    "RETURN",     // 24
+    "STR_CONCAT", // 25
+    "COMMA",      // 26
+    "COLON",      // 27
+    "INCR",       // 28
+    "DECR",       // 29
+    "POW",        // 30
+    "INTDIV",     // 31
+    "LPAREN",     // 32
+    "RPAREN",     // 33
+    "END",        // 34
+    "INT",        // 35
+    "STR",        // 36
+    "BOOL",       // 37
+    "END_IF",     // 38
+    "WHILE",      // 39
+    "WEND",       // 40
+    "DIM",        // 41
+    "LET",        // 42
+    "FLOATNUM",   // 43
+    "AS",         // 44
+    "FUNC_CALL",  // 45
+    "FOR",        // 46
+    "TO",         // 47
+    "STEP",       // 48
+    "NEXT",       // 49
+    "GOSUB",      // 50
+    "LABEL",      // 51
+    "COMMENT",    // 52
 };
 #endif
 #endif /* MAIN_H_ */
