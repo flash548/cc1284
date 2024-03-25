@@ -8,12 +8,15 @@ Node Node::visit() {
   return Node();
 }
 
+/// @brief
+/// @param op1
+/// @param op2
+/// @param op
 BinOpNode::BinOpNode(Value op1, Value op2, BinOperation op) : Node() {
   _op1 = op1;
   _op2 = op2;
   _op = op;
 }
-
 Node BinOpNode::visit() {
   switch (_op) {
   case BINOP_ADD:
@@ -48,6 +51,26 @@ Node BinOpNode::visit() {
     return ValueNode(Value(_op1 < _op2)).visit();
   case BINOP_LTE:
     return ValueNode(Value(_op1 <= _op2)).visit();
+  case BINOP_INTEGER_DIV:
+    return ValueNode(_op1.intDiv(_op2)).visit();
+  default:
+    break;
+  }
+  return Node();
+}
+
+UnOpNode::UnOpNode(Value op1, UnaryOperation op) {
+  _op1 = op1;
+  _op = op;
+}
+Node UnOpNode::visit() {
+  switch (_op) {
+  case UNOP_NEGATE:
+    return ValueNode(Value(-_op1)).visit();
+  case UNOP_NOT:
+    return ValueNode(Value(!_op1)).visit();
+  case UNOP_POSITIVE:
+    return ValueNode(Value(+_op1)).visit();
   default:
     break;
   }
@@ -63,13 +86,7 @@ Node ValueNode::visit() {
 /// @brief
 /// @return
 int main() {
-  BinOpNode binOpNode(Value("hello"), Value("world"), BINOP_ADD);
+  BinOpNode binOpNode(Value(20), Value(3), BINOP_INTEGER_DIV);
   binOpNode.visit();
-  Value v(INTEGER, 3);
-  v.update_array(0, 1);
-  v.update_array(1, 2);
-  v.update_array(2, 3);
-  BinOpNode binOpNode2(v.index_array(2), Value(2), BINOP_ADD);
-  binOpNode2.visit();
   return 0;
 }

@@ -5,7 +5,7 @@
 
 enum BinOperation {
   BINOP_ADD = 0,
-  BINOP_SUBTRACT = 1,
+  BINOP_SUBTRACT,
   BINOP_MULTIPLY,
   BINOP_DIVIDE,
   BINOP_MODULO,
@@ -22,6 +22,8 @@ enum BinOperation {
   BINOP_LTE,
   BINOP_INTEGER_DIV
 };
+
+enum UnaryOperation { UNOP_NOT = 0, UNOP_NEGATE, UNOP_POSITIVE };
 
 /// @brief
 class Node {
@@ -45,6 +47,16 @@ private:
 
 public:
   BinOpNode(Value op1, Value op2, BinOperation op);
+  Node visit();
+};
+
+class UnOpNode : public Node {
+private:
+  Value _op1;
+  UnaryOperation _op;
+
+public:
+  UnOpNode(Value op1, UnaryOperation op);
   Node visit();
 };
 
